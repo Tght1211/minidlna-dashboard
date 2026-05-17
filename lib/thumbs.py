@@ -7,6 +7,10 @@ from pathlib import Path
 
 CACHE_DIR = Path.home() / ".cache" / "minidlna-dashboard" / "thumbs"
 FFMPEG = "/opt/homebrew/bin/ffmpeg"
+# Cap concurrent ffmpeg invocations: external USB/Thunderbolt drives thrash
+# badly when many seek+read jobs run in parallel.
+MAX_CONCURRENT = 3
+_ffmpeg_slots = threading.BoundedSemaphore(MAX_CONCURRENT)
 
 _locks: dict[int, threading.Lock] = {}
 _locks_guard = threading.Lock()
@@ -61,11 +65,12 @@ def ensure_thumb(detail_id: int, source_path: str, seek: float = 5.0, width: int
             return cmd
 
         def _run(use_seek: bool) -> bool:
-            try:
-                r = subprocess.run(_build(use_seek), capture_output=True, text=True, timeout=20)
-            except (subprocess.TimeoutExpired, OSError):
-                return False
-            return r.returncode == 0 and tmp.exists() and tmp.stat().st_size > 0
+            with _ffmpeg_slots:
+                try:
+                    r = subprocess.run(_build(use_seek), capture_output=True, text=True, timeout=30)
+                except (subprocess.TimeoutExpired, OSError):
+                    return False
+                return r.returncode == 0 and tmp.exists() and tmp.stat().st_size > 0
 
         ok = _run(use_seek=True) or _run(use_seek=False)
         if not ok:

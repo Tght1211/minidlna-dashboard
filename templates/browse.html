@@ -19,12 +19,12 @@
   <a href="{{ url_for('browse', kind=kind) }}">所有文件夹</a>
   <span class="sep">/</span>
   <code>{{ folder }}</code>
-  <span class="muted">· {{ items|length }} 项</span>
+  <span class="muted">· 共 {{ total }} 项</span>
 </div>
 {% elif q %}
 <div class="crumbs">
   搜索 <code>{{ q }}</code>
-  <span class="muted">· {{ items|length }} 条结果</span>
+  <span class="muted">· 共 {{ total }} 条结果</span>
 </div>
 {% endif %}
 
@@ -45,7 +45,7 @@
 
 {% if items %}
 {% if kind == 'video' %}
-<div class="media-grid">
+<div class="media-grid" id="items-container">
   {% for v in items %}
   <a class="media-card" href="#" data-id="{{ v.ID }}" data-stream="{{ v.stream_url }}" data-dlna="{{ v.dlna_url }}" data-kind="video" data-title="{{ v.TITLE }}">
     <div class="thumb"><img loading="lazy" src="{{ url_for('thumb', detail_id=v.ID) }}" onerror="this.parentNode.classList.add('noimg')"></div>
@@ -57,7 +57,7 @@
   {% endfor %}
 </div>
 {% else %}
-<div class="media-list">
+<div class="media-list" id="items-container">
   {% for a in items %}
   <a class="row-item" href="#" data-id="{{ a.ID }}" data-stream="{{ a.stream_url }}" data-dlna="{{ a.dlna_url }}" data-kind="audio" data-title="{{ a.TITLE }}">
     <span class="ico">♪</span>
@@ -65,6 +65,13 @@
     <span class="sub">{{ a.DURATION|duration }} · {{ a.SIZE|filesize }}</span>
   </a>
   {% endfor %}
+</div>
+{% endif %}
+
+{% if total > items|length %}
+<div id="load-sentinel" class="load-sentinel">
+  <span class="spinner"></span>
+  <span class="muted">已加载 <span id="loaded-count">{{ items|length }}</span> / {{ total }}</span>
 </div>
 {% endif %}
 {% endif %}
@@ -76,4 +83,18 @@
 </div>
 {% endif %}
 
+{% endblock %}
+{% block scripts %}
+{% if items and total > items|length %}
+<script>
+  initInfiniteScroll({
+    kind: {{ kind|tojson }},
+    folder: {{ (folder or "")|tojson }},
+    q: {{ (q or "")|tojson }},
+    total: {{ total }},
+    loaded: {{ items|length }},
+    pageSize: {{ page_size }},
+  });
+</script>
+{% endif %}
 {% endblock %}

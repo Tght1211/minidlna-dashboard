@@ -336,6 +336,150 @@ main {
   font-family: var(--mono); font-size: 12px;
 }
 
+/* ---------- audio player ---------- */
+.modal-body.audio-player-modal {
+  max-width: 460px;
+  padding: 28px 32px 24px;
+}
+.ap { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+.ap-cover {
+  width: 240px; height: 240px; position: relative;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08), transparent 45%),
+    conic-gradient(from 0deg,
+      hsl(var(--h), 55%, 18%) 0deg,
+      hsl(var(--h), 60%, 28%) 90deg,
+      hsl(var(--h), 50%, 14%) 180deg,
+      hsl(var(--h), 60%, 24%) 270deg,
+      hsl(var(--h), 55%, 18%) 360deg);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.06) inset,
+    0 12px 30px rgba(0,0,0,0.45),
+    0 0 60px hsla(var(--h), 70%, 40%, 0.18);
+}
+.ap-cover::before {
+  /* vinyl grooves */
+  content: "";
+  position: absolute; inset: 8px;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle at center,
+    rgba(0,0,0,0.0) 0px,
+    rgba(0,0,0,0.18) 1px,
+    rgba(255,255,255,0.025) 2px,
+    rgba(0,0,0,0.0) 3px);
+  pointer-events: none;
+}
+.ap-disc {
+  width: 100%; height: 100%; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  animation: ap-spin 14s linear infinite;
+  animation-play-state: paused;
+}
+.ap-cover.playing .ap-disc { animation-play-state: running; }
+.ap-art {
+  width: 96px; height: 96px; border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, hsl(var(--h), 70%, 60%), hsl(var(--h), 65%, 35%) 70%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow:
+    0 0 0 6px rgba(0,0,0,0.5),
+    0 0 0 7px rgba(255,255,255,0.08),
+    inset 0 0 14px rgba(0,0,0,0.4);
+}
+.ap-art::after {
+  /* center spindle dot */
+  content: ""; position: absolute;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #0d0f14;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.15);
+}
+.ap-letter {
+  font-family: var(--mono);
+  color: rgba(255,255,255,0.92);
+  font-size: 32px; font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  letter-spacing: 0;
+}
+@keyframes ap-spin { to { transform: rotate(360deg); } }
+
+.ap-info { text-align: center; max-width: 100%; }
+.ap-song {
+  font-size: 17px; font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 380px;
+}
+.ap-artist {
+  font-size: 12px; color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.ap-progress {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 0 4px;
+}
+.ap-time {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text-muted); min-width: 34px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ap-bar { flex: 1; cursor: pointer; padding: 10px 0; }
+.ap-bar-track {
+  position: relative;
+  height: 3px; background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+}
+.ap-bar-fill {
+  position: absolute; top: 0; left: 0;
+  height: 100%; background: linear-gradient(90deg, var(--accent), hsl(170, 90%, 60%));
+  border-radius: 2px;
+  box-shadow: 0 0 8px hsla(170, 80%, 55%, 0.5);
+}
+.ap-bar-thumb {
+  position: absolute; top: 50%;
+  width: 12px; height: 12px;
+  background: #fff; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 3px hsla(170, 80%, 50%, 0.25), 0 2px 6px rgba(0,0,0,0.4);
+  transition: transform 0.12s;
+  pointer-events: none;
+}
+.ap-bar:hover .ap-bar-thumb { transform: translate(-50%, -50%) scale(1.15); }
+
+.ap-controls { display: flex; align-items: center; gap: 20px; }
+.ap-play {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--accent); color: #00120f;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 18px hsla(170, 80%, 50%, 0.35);
+  transition: transform 0.08s, filter 0.12s;
+}
+.ap-play:hover { filter: brightness(1.1); }
+.ap-play:active { transform: scale(0.96); }
+
+.ap-dlna {
+  display: flex; gap: 6px;
+  width: 100%; margin-top: 6px;
+}
+.ap-dlna input {
+  flex: 1; background: var(--bg-soft); border: 1px solid var(--border);
+  color: var(--text-dim); padding: 6px 10px; border-radius: 5px;
+  font-family: var(--mono); font-size: 11px;
+}
+
+/* ---------- infinite scroll sentinel ---------- */
+.load-sentinel {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 30px 0;
+  color: var(--text-dim); font-size: 13px;
+}
+
 /* ---------- misc ---------- */
 .muted { color: var(--text-muted); font-size: 13px; }
 .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }

@@ -144,31 +144,82 @@ def index():
     )
 
 
+PAGE_SIZE = 60
+
+
+def _decorate(items: list) -> list:
+    for it in items:
+        it["stream_url"] = _stream_url(it["ID"])
+        it["dlna_url"] = _dlna_url(it["ID"], it.get("PATH"), it.get("MIME"))
+    return items
+
+
 @app.route("/browse")
 def browse():
     kind = request.args.get("kind", "video")
     if kind not in ("video", "audio"):
         kind = "video"
-    group = request.args.get("group", "folder")
     folder = request.args.get("folder")
     q = request.args.get("q", "").strip()
     items: list = []
     folders_list: list = []
+    total = 0
     media_roots = [md.path for md in config.parse_media_dirs()]
     if q:
-        items = db.search(q)
+        items = db.search(q, limit=PAGE_SIZE)
+        total = db.count_search(q)
     elif folder:
-        items = db.items_in_folder(folder, kind)
+        items = db.items_in_folder(folder, kind, offset=0, limit=PAGE_SIZE)
+        total = db.count_in_folder(folder, kind)
     else:
         folders_list = db.folders(kind, media_roots)
-    for it in items:
-        it["stream_url"] = _stream_url(it["ID"])
-        it["dlna_url"] = _dlna_url(it["ID"], it.get("PATH"), it.get("MIME"))
+    _decorate(items)
     return render_template(
         "browse.html",
-        kind=kind, group=group, folder=folder, q=q,
+        kind=kind, folder=folder, q=q,
         items=items, folders=folders_list,
+        total=total, page_size=PAGE_SIZE,
     )
+
+
+@app.route("/api/items")
+def api_items():
+    kind = request.args.get("kind", "video")
+    if kind not in ("video", "audio"):
+        return jsonify({"items": [], "total": 0})
+    folder = request.args.get("folder")
+    q = request.args.get("q", "").strip()
+    try:
+        offset = max(0, int(request.args.get("offset", "0")))
+    except ValueError:
+        offset = 0
+    limit = PAGE_SIZE
+    if q:
+        items = db.search(q, limit=limit + offset)[offset:]
+        total = db.count_search(q)
+    elif folder:
+        items = db.items_in_folder(folder, kind, offset=offset, limit=limit)
+        total = db.count_in_folder(folder, kind)
+    else:
+        items, total = [], 0
+    _decorate(items)
+    return jsonify({
+        "items": [{
+            "id": i["ID"],
+            "title": i["TITLE"],
+            "duration": i.get("DURATION"),
+            "resolution": i.get("RESOLUTION"),
+            "size": i.get("SIZE"),
+            "mime": i.get("MIME"),
+            "stream_url": i["stream_url"],
+            "dlna_url": i["dlna_url"],
+            "thumb_url": url_for("thumb", detail_id=i["ID"]) if (i.get("MIME") or "").startswith("video") else None,
+            "kind": "video" if (i.get("MIME") or "").startswith("video") else "audio",
+        } for i in items],
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+    })
 
 
 @app.route("/settings")

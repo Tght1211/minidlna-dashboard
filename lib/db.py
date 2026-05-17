@@ -114,17 +114,36 @@ def folders(kind: str, media_roots: list[str] | None = None) -> list[dict[str, A
     return sorted(buckets.values(), key=lambda x: x["folder"])
 
 
-def items_in_folder(folder: str, kind: str, limit: int = 5000) -> list[dict[str, Any]]:
-    """Return all items recursively under `folder` (so a date bucket includes
+def items_in_folder(folder: str, kind: str, offset: int = 0, limit: int = 60) -> list[dict[str, Any]]:
+    """Return items recursively under `folder` (so a date bucket includes
     Camera01/02/03 leaves all together)."""
     like = f"{folder.rstrip('/')}/%"
     rows = _q(
         "SELECT ID, TITLE, PATH, SIZE, DURATION, RESOLUTION, MIME, ALBUM_ART "
         "FROM DETAILS WHERE MIME LIKE ? AND PATH LIKE ? "
-        "ORDER BY PATH LIMIT ?",
-        (f"{kind}/%", like, limit),
+        "ORDER BY PATH LIMIT ? OFFSET ?",
+        (f"{kind}/%", like, limit, offset),
     )
     return [dict(r) for r in rows]
+
+
+def count_in_folder(folder: str, kind: str) -> int:
+    like = f"{folder.rstrip('/')}/%"
+    rows = _q(
+        "SELECT COUNT(*) AS n FROM DETAILS WHERE MIME LIKE ? AND PATH LIKE ?",
+        (f"{kind}/%", like),
+    )
+    return int(rows[0]["n"]) if rows else 0
+
+
+def count_search(query: str) -> int:
+    like = f"%{query}%"
+    rows = _q(
+        "SELECT COUNT(*) AS n FROM DETAILS WHERE MIME IS NOT NULL AND ("
+        "TITLE LIKE ? OR ARTIST LIKE ? OR ALBUM LIKE ? OR PATH LIKE ?)",
+        (like, like, like, like),
+    )
+    return int(rows[0]["n"]) if rows else 0
 
 
 def all_items(kind: str, limit: int = 5000) -> list[dict[str, Any]]:
