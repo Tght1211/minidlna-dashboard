@@ -4,7 +4,9 @@
 
 <div class="browse-bar">
   <div class="tabs">
+    <a href="{{ url_for('browse', kind='all') }}" class="tab {% if kind == 'all' %}active{% endif %}">全部</a>
     <a href="{{ url_for('browse', kind='video') }}" class="tab {% if kind == 'video' %}active{% endif %}">视频</a>
+    <a href="{{ url_for('browse', kind='image') }}" class="tab {% if kind == 'image' %}active{% endif %}">照片</a>
     <a href="{{ url_for('browse', kind='audio') }}" class="tab {% if kind == 'audio' %}active{% endif %}">音乐</a>
   </div>
   <form class="search" method="get" action="{{ url_for('browse') }}">
@@ -43,26 +45,41 @@
 </div>
 {% endif %}
 
+{% macro item_kind(mime) %}{% if mime.startswith('video') %}video{% elif mime.startswith('image') %}image{% else %}audio{% endif %}{% endmacro %}
+
 {% if items %}
-{% if kind == 'video' %}
-<div class="media-grid" id="items-container">
-  {% for v in items %}
-  <a class="media-card" href="#" data-id="{{ v.ID }}" data-stream="{{ v.stream_url }}" data-dlna="{{ v.dlna_url }}" data-kind="video" data-title="{{ v.TITLE }}">
-    <div class="thumb"><img loading="lazy" src="{{ url_for('thumb', detail_id=v.ID) }}" onerror="this.parentNode.classList.add('noimg')"></div>
-    <div class="meta">
-      <div class="title">{{ v.TITLE }}</div>
-      <div class="sub">{{ v.DURATION|duration }} · {{ v.RESOLUTION or '' }} · {{ v.SIZE|filesize }}</div>
-    </div>
-  </a>
-  {% endfor %}
-</div>
-{% else %}
+{% if kind == 'audio' %}
 <div class="media-list" id="items-container">
   {% for a in items %}
   <a class="row-item" href="#" data-id="{{ a.ID }}" data-stream="{{ a.stream_url }}" data-dlna="{{ a.dlna_url }}" data-kind="audio" data-title="{{ a.TITLE }}">
     <span class="ico">♪</span>
     <span class="title">{{ a.TITLE }}</span>
     <span class="sub">{{ a.DURATION|duration }} · {{ a.SIZE|filesize }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="media-grid" id="items-container">
+  {% for it in items %}
+  {% set ik = item_kind(it.MIME or '') %}
+  <a class="media-card {{ ik }}" href="#" data-id="{{ it.ID }}" data-stream="{{ it.stream_url }}" data-dlna="{{ it.dlna_url }}" data-kind="{{ ik }}" data-title="{{ it.TITLE }}">
+    <div class="thumb">
+      {% if ik in ('video', 'image') %}
+      <img loading="lazy" src="{{ url_for('thumb', detail_id=it.ID) }}" onerror="this.parentNode.classList.add('noimg')">
+      {% else %}
+      <span class="audio-glyph">♪</span>
+      {% endif %}
+      {% if ik == 'video' %}<span class="badge badge-video">VIDEO</span>{% endif %}
+      {% if ik == 'image' %}<span class="badge badge-image">PHOTO</span>{% endif %}
+    </div>
+    <div class="meta">
+      <div class="title">{{ it.TITLE }}</div>
+      <div class="sub">
+        {% if ik == 'video' %}{{ it.DURATION|duration }} · {{ it.RESOLUTION or '' }} · {{ it.SIZE|filesize }}
+        {% elif ik == 'image' %}{{ it.RESOLUTION or '—' }} · {{ it.SIZE|filesize }}
+        {% else %}{{ it.DURATION|duration }} · {{ it.SIZE|filesize }}{% endif %}
+      </div>
+    </div>
   </a>
   {% endfor %}
 </div>

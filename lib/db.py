@@ -88,14 +88,19 @@ def _bucket_for(path: str, media_roots: list[str]) -> str:
     return os.path.dirname(path)
 
 
+def _mime_clause(kind: str) -> tuple[str, tuple]:
+    if kind == "all":
+        return "MIME IS NOT NULL", ()
+    return "MIME LIKE ?", (f"{kind}/%",)
+
+
 def folders(kind: str, media_roots: list[str] | None = None) -> list[dict[str, Any]]:
     """Group items into top-level buckets — one per immediate sub-directory of
-    each configured media_dir. Loose files sitting directly in a media_dir all
-    share that media_dir's bucket."""
-    mime_filter = f"{kind}/%"
+    each configured media_dir."""
+    mime_sql, mime_params = _mime_clause(kind)
     rows = _q(
-        "SELECT PATH, SIZE, ID FROM DETAILS WHERE MIME LIKE ? AND PATH IS NOT NULL",
-        (mime_filter,),
+        f"SELECT PATH, SIZE, ID FROM DETAILS WHERE {mime_sql} AND PATH IS NOT NULL",
+        mime_params,
     )
     roots = media_roots or []
     buckets: dict[str, dict[str, Any]] = {}
@@ -115,23 +120,24 @@ def folders(kind: str, media_roots: list[str] | None = None) -> list[dict[str, A
 
 
 def items_in_folder(folder: str, kind: str, offset: int = 0, limit: int = 60) -> list[dict[str, Any]]:
-    """Return items recursively under `folder` (so a date bucket includes
-    Camera01/02/03 leaves all together)."""
+    """Return items recursively under `folder`."""
     like = f"{folder.rstrip('/')}/%"
+    mime_sql, mime_params = _mime_clause(kind)
     rows = _q(
-        "SELECT ID, TITLE, PATH, SIZE, DURATION, RESOLUTION, MIME, ALBUM_ART "
-        "FROM DETAILS WHERE MIME LIKE ? AND PATH LIKE ? "
-        "ORDER BY PATH LIMIT ? OFFSET ?",
-        (f"{kind}/%", like, limit, offset),
+        f"SELECT ID, TITLE, PATH, SIZE, DURATION, RESOLUTION, MIME, ALBUM_ART "
+        f"FROM DETAILS WHERE {mime_sql} AND PATH LIKE ? "
+        f"ORDER BY PATH LIMIT ? OFFSET ?",
+        mime_params + (like, limit, offset),
     )
     return [dict(r) for r in rows]
 
 
 def count_in_folder(folder: str, kind: str) -> int:
     like = f"{folder.rstrip('/')}/%"
+    mime_sql, mime_params = _mime_clause(kind)
     rows = _q(
-        "SELECT COUNT(*) AS n FROM DETAILS WHERE MIME LIKE ? AND PATH LIKE ?",
-        (f"{kind}/%", like),
+        f"SELECT COUNT(*) AS n FROM DETAILS WHERE {mime_sql} AND PATH LIKE ?",
+        mime_params + (like,),
     )
     return int(rows[0]["n"]) if rows else 0
 

@@ -52,6 +52,8 @@ function openItem(id, streamUrl, dlnaUrl, kind, title) {
   modal.classList.remove("hidden");
   if (kind === "audio") {
     renderAudioPlayer(c, { id, streamUrl, dlnaUrl, title: cleanTitle });
+  } else if (kind === "image") {
+    renderImageViewer(c, { id, streamUrl, dlnaUrl, title: cleanTitle });
   } else {
     renderVideoPlayer(c, { id, streamUrl, dlnaUrl, title: cleanTitle, host });
   }
@@ -69,6 +71,18 @@ function decodeEntities(s) {
     cur = next;
   }
   return cur;
+}
+
+function renderImageViewer(c, { streamUrl, dlnaUrl, title }) {
+  c.classList.remove("audio-player-modal");
+  c.innerHTML = `
+    <h2>${escapeHtml(title)}</h2>
+    <img src="${streamUrl}" style="max-width:100%;max-height:70vh;border-radius:6px;display:block;margin:14px auto 0;">
+    <div class="url-row">
+      <input id="dlna-url" value="${dlnaUrl}" readonly>
+      <button class="btn" onclick="copyUrl()">复制 DLNA 直链</button>
+    </div>
+  `;
 }
 
 function renderVideoPlayer(c, { streamUrl, dlnaUrl, title, host }) {
@@ -262,25 +276,34 @@ function initInfiniteScroll({ kind, folder, q, total, loaded, pageSize }) {
     return String(d).split(".")[0];
   }
   function buildCard(item) {
-    if (item.kind === "video") {
-      return `<a class="media-card" href="#"
+    if (item.kind === "audio") {
+      return `<a class="row-item" href="#"
         data-id="${item.id}" data-stream="${escapeAttr(item.stream_url)}"
-        data-dlna="${escapeAttr(item.dlna_url)}" data-kind="video"
+        data-dlna="${escapeAttr(item.dlna_url)}" data-kind="audio"
         data-title="${escapeAttr(item.title)}">
-        <div class="thumb"><img loading="lazy" src="${escapeAttr(item.thumb_url)}" onerror="this.parentNode.classList.add('noimg')"></div>
-        <div class="meta">
-          <div class="title">${escapeHtml(item.title)}</div>
-          <div class="sub">${fmtDur(item.duration)} · ${item.resolution || ""} · ${fmtSize(item.size)}</div>
-        </div>
+        <span class="ico">♪</span>
+        <span class="title">${escapeHtml(item.title)}</span>
+        <span class="sub">${fmtDur(item.duration)} · ${fmtSize(item.size)}</span>
       </a>`;
     }
-    return `<a class="row-item" href="#"
+    const badge = item.kind === "image"
+      ? `<span class="badge badge-image">PHOTO</span>`
+      : `<span class="badge badge-video">VIDEO</span>`;
+    const sub = item.kind === "image"
+      ? `${item.resolution || "—"} · ${fmtSize(item.size)}`
+      : `${fmtDur(item.duration)} · ${item.resolution || ""} · ${fmtSize(item.size)}`;
+    return `<a class="media-card ${item.kind}" href="#"
       data-id="${item.id}" data-stream="${escapeAttr(item.stream_url)}"
-      data-dlna="${escapeAttr(item.dlna_url)}" data-kind="audio"
+      data-dlna="${escapeAttr(item.dlna_url)}" data-kind="${item.kind}"
       data-title="${escapeAttr(item.title)}">
-      <span class="ico">♪</span>
-      <span class="title">${escapeHtml(item.title)}</span>
-      <span class="sub">${fmtDur(item.duration)} · ${fmtSize(item.size)}</span>
+      <div class="thumb">
+        <img loading="lazy" src="${escapeAttr(item.thumb_url)}" onerror="this.parentNode.classList.add('noimg')">
+        ${badge}
+      </div>
+      <div class="meta">
+        <div class="title">${escapeHtml(item.title)}</div>
+        <div class="sub">${sub}</div>
+      </div>
     </a>`;
   }
 

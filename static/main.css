@@ -210,6 +210,26 @@ main {
   content: "🎬"; font-size: 36px; opacity: 0.4;
 }
 .media-card .thumb.noimg img { display: none; }
+.media-card.image .thumb.noimg::after { content: "🖼"; }
+.media-card.audio .thumb.noimg::after, .media-card.audio .audio-glyph {
+  content: "♪";
+}
+.media-card .audio-glyph {
+  font-size: 38px; color: var(--accent); opacity: 0.6;
+}
+.media-card .badge {
+  position: absolute; left: 8px; bottom: 8px;
+  padding: 2px 7px; border-radius: 4px;
+  font-size: 9px; font-weight: 600; letter-spacing: 1px;
+  font-family: var(--mono);
+  backdrop-filter: blur(6px);
+}
+.media-card .badge-video {
+  background: rgba(0,0,0,0.6); color: #fff;
+}
+.media-card .badge-image {
+  background: rgba(0,230,195,0.85); color: #00120f;
+}
 .media-card .meta { padding: 10px 12px; }
 .media-card .title {
   font-size: 13px; font-weight: 500;

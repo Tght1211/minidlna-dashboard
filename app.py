@@ -154,11 +154,14 @@ def _decorate(items: list) -> list:
     return items
 
 
+VALID_KINDS = {"all", "video", "image", "audio"}
+
+
 @app.route("/browse")
 def browse():
-    kind = request.args.get("kind", "video")
-    if kind not in ("video", "audio"):
-        kind = "video"
+    kind = request.args.get("kind", "all")
+    if kind not in VALID_KINDS:
+        kind = "all"
     folder = request.args.get("folder")
     q = request.args.get("q", "").strip()
     items: list = []
@@ -184,8 +187,8 @@ def browse():
 
 @app.route("/api/items")
 def api_items():
-    kind = request.args.get("kind", "video")
-    if kind not in ("video", "audio"):
+    kind = request.args.get("kind", "all")
+    if kind not in VALID_KINDS:
         return jsonify({"items": [], "total": 0})
     folder = request.args.get("folder")
     q = request.args.get("q", "").strip()
@@ -213,8 +216,12 @@ def api_items():
             "mime": i.get("MIME"),
             "stream_url": i["stream_url"],
             "dlna_url": i["dlna_url"],
-            "thumb_url": url_for("thumb", detail_id=i["ID"]) if (i.get("MIME") or "").startswith("video") else None,
-            "kind": "video" if (i.get("MIME") or "").startswith("video") else "audio",
+            "thumb_url": url_for("thumb", detail_id=i["ID"]) if (i.get("MIME") or "").startswith(("video", "image")) else None,
+            "kind": (
+                "video" if (i.get("MIME") or "").startswith("video") else
+                "image" if (i.get("MIME") or "").startswith("image") else
+                "audio"
+            ),
         } for i in items],
         "total": total,
         "offset": offset,
@@ -257,9 +264,12 @@ def stream(detail_id: int):
 @app.route("/thumb/<int:detail_id>")
 def thumb(detail_id: int):
     info = db.item(detail_id)
-    if not info or not (info.get("MIME") or "").startswith("video"):
+    if not info:
         abort(404)
-    p = thumbs.ensure_thumb(detail_id, info["PATH"])
+    mime = info.get("MIME") or ""
+    if not (mime.startswith("video") or mime.startswith("image")):
+        abort(404)
+    p = thumbs.ensure_thumb(detail_id, info["PATH"], is_image=mime.startswith("image"))
     if not p:
         abort(404)
     return send_file(p, mimetype="image/jpeg", max_age=86400)

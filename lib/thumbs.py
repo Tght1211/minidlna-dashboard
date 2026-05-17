@@ -34,8 +34,10 @@ def has_thumb(detail_id: int) -> bool:
     return p.exists() and p.stat().st_size > 0
 
 
-def ensure_thumb(detail_id: int, source_path: str, seek: float = 5.0, width: int = 320) -> Path | None:
-    """Generate thumbnail if missing. Returns path or None on failure."""
+def ensure_thumb(detail_id: int, source_path: str, *, is_image: bool = False,
+                 seek: float = 5.0, width: int = 320) -> Path | None:
+    """Generate thumbnail if missing. Works for video (uses seek+frame) and
+    image (no seek, just resize). Returns path or None on failure."""
     p = thumb_path(detail_id)
     if has_thumb(detail_id):
         return p
@@ -45,13 +47,11 @@ def ensure_thumb(detail_id: int, source_path: str, seek: float = 5.0, width: int
     with _lock_for(detail_id):
         if has_thumb(detail_id):
             return p
-        # Use a sibling .partial file but keep .jpg extension so ffmpeg picks
-        # the right muxer; then atomic rename.
         tmp = p.with_name(f".{detail_id}.partial.jpg")
 
         def _build(use_seek: bool) -> list[str]:
             cmd = [FFMPEG, "-y", "-nostdin", "-loglevel", "error"]
-            if use_seek:
+            if use_seek and not is_image:
                 cmd += ["-ss", f"{seek}"]
             cmd += [
                 "-i", source_path,
@@ -72,7 +72,11 @@ def ensure_thumb(detail_id: int, source_path: str, seek: float = 5.0, width: int
                     return False
                 return r.returncode == 0 and tmp.exists() and tmp.stat().st_size > 0
 
-        ok = _run(use_seek=True) or _run(use_seek=False)
+        # For images, never seek; for video try seek first, fall back without.
+        if is_image:
+            ok = _run(use_seek=False)
+        else:
+            ok = _run(use_seek=True) or _run(use_seek=False)
         if not ok:
             if tmp.exists():
                 tmp.unlink(missing_ok=True)
