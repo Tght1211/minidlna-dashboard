@@ -132,18 +132,21 @@ function escapeAttr(s) { return String(s ?? "").replace(/"/g, "&quot;"); }
 
 function renderVideoPlayer(c, { streamUrl, dlnaUrl, title }) {
   c.classList.remove("audio-player-modal");
+  c.classList.add("video-player-modal");
   c.innerHTML = `
-    <h2>${escapeHtml(title)}</h2>
-    <video src="${streamUrl}" controls autoplay playsinline></video>
-    <p class="muted" style="margin-top: 8px;">
-      视频一片黑？Insta360 默认 HEVC/H.265 编码，Chrome / Cursor 内置浏览器不解码。
-      用 Safari 打开本页或在系统播放器里看原文件。
-    </p>
-    <div class="url-row">
-      <input id="dlna-url" value="${dlnaUrl}" readonly>
-      <button class="btn" onclick="copyUrl()">复制 DLNA 直链</button>
+    <h2 class="vp-title">${escapeHtml(title)}</h2>
+    <div class="vp-stage">
+      <video class="vp-video" src="${streamUrl}" controls autoplay playsinline></video>
     </div>
-    <p class="muted" style="margin-top: 10px;">DLNA 直链给投影仪/小爱等局域网客户端用（minidlna 8200 端口）。</p>
+    <div class="vp-footer">
+      <div class="vp-url-row">
+        <input id="dlna-url" value="${escapeAttr(dlnaUrl)}" readonly>
+        <button class="btn small" onclick="copyUrl()">复制 DLNA 直链</button>
+      </div>
+      <p class="muted vp-hint">
+        视频一片黑？Insta360 默认 HEVC/H.265，Chrome / Cursor 内置浏览器不解码——用 Safari 打开本页，或把 DLNA 直链给投影仪/小爱（minidlna 8200 端口）。
+      </p>
+    </div>
   `;
 }
 
@@ -276,7 +279,7 @@ function closeModal(ev) {
   const modal = document.getElementById("modal");
   const body = document.querySelector(".modal-body");
   modal.classList.add("hidden");
-  if (body) body.classList.remove("audio-player-modal", "image-viewer-modal");
+  if (body) body.classList.remove("audio-player-modal", "image-viewer-modal", "video-player-modal");
   document.getElementById("modal-content").innerHTML = "";
 }
 
