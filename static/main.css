@@ -592,19 +592,20 @@ main {
 .modal-body.video-player-modal {
   max-width: 1280px;
   width: min(1280px, 96vw);
-  padding: 18px 14px 22px;
+  max-height: calc(100vh - 24px);
+  padding: 14px 14px 18px;
   display: flex; flex-direction: column;
-  gap: 22px;
   clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
 }
 .modal-body.video-player-modal .close {
-  top: 12px; right: 14px; z-index: 10;
+  top: 10px; right: 14px; z-index: 10;
 }
 .vp-title {
   font-size: 13px; font-weight: 600;
   font-family: var(--mono); letter-spacing: 1.5px;
   color: var(--text);
-  margin: 0 12px 0 16px; padding-right: 32px;
+  margin: 0 0 10px 4px;
+  padding-right: 36px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .vp-title::before {
@@ -617,9 +618,16 @@ main {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
+  /* Cap height so the footer is always visible: title (~24px) + gap (24px)
+     + footer (~70px) + padding (32px) ≈ 150px reserved. */
+  max-height: calc(100vh - 170px);
+  margin-bottom: 24px;
   background: #000;
   overflow: hidden;
   box-shadow: 0 0 32px rgba(0,230,195,0.08);
+  /* center the stage horizontally when max-height kicks in and aspect ratio
+     makes width less than 100% */
+  align-self: center;
 }
 .vp-video {
   width: 100%; height: 100%;
@@ -628,8 +636,8 @@ main {
   object-fit: contain;
 }
 .vp-footer {
-  display: flex; flex-direction: column; gap: 8px;
-  padding: 0 12px 0 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 0 4px;
 }
 .vp-url-row {
   display: flex; gap: 8px;
