@@ -135,7 +135,7 @@
   <h3>最近照片 <a class="more" href="{{ url_for('browse', kind='image') }}">全部 →</a></h3>
   <div class="row-scroll">
     {% for p in recent_image %}
-    <a class="media-card image" href="#" data-id="{{ p.ID }}" data-stream="{{ p.stream_url }}" data-dlna="{{ p.dlna_url }}" data-kind="image" data-title="{{ p.TITLE }}">
+    <a class="media-card image" href="#" data-id="{{ p.ID }}" data-stream="{{ p.stream_url }}" data-dlna="{{ p.dlna_url }}" data-kind="image" data-title="{{ p.TITLE }}" data-resolution="{{ p.RESOLUTION or '' }}">
       <div class="thumb">
         <img loading="lazy" src="{{ url_for('thumb', detail_id=p.ID) }}"
           onload="this.classList.add('loaded');this.parentNode.classList.add('loaded')"

@@ -59,6 +59,10 @@ function openItem(id, streamUrl, dlnaUrl, kind, title) {
   }
 }
 
+// Tee in the resolution into renderImageViewer via dataset lookup — read on click handler
+const _origClickHandler = document.addEventListener;
+// (no-op shim, kept for clarity; the click delegation already passes data-* via dataset.)
+
 function decodeEntities(s) {
   const t = document.createElement("textarea");
   let cur = String(s ?? "");
@@ -73,33 +77,47 @@ function decodeEntities(s) {
   return cur;
 }
 
-function renderImageViewer(c, { streamUrl, dlnaUrl, title }) {
+function renderImageViewer(c, { streamUrl, dlnaUrl, title, resolution }) {
   c.classList.remove("audio-player-modal");
   c.classList.add("image-viewer-modal");
-  // Build navigable list from all image cards currently on the page.
   const cards = [...document.querySelectorAll('[data-kind="image"]')];
   const list = cards.map(el => ({
     streamUrl: el.dataset.stream,
     dlnaUrl: el.dataset.dlna,
     title: decodeEntities(el.dataset.title),
+    resolution: el.dataset.resolution || "",
   }));
   let idx = Math.max(0, list.findIndex(x => x.streamUrl === streamUrl));
   if (idx === -1) {
-    list.unshift({ streamUrl, dlnaUrl, title });
+    list.unshift({ streamUrl, dlnaUrl, title, resolution: resolution || "" });
     idx = 0;
+  }
+
+  function parseRes(s) {
+    const m = String(s || "").match(/(\d+)x(\d+)/);
+    return m ? { w: +m[1], h: +m[2] } : null;
   }
 
   function paint() {
     const cur = list[idx];
+    const r = parseRes(cur.resolution);
+    // Reserve layout space via width/height attrs so the modal doesn't jump
+    // around as the full image loads. Falls back to a 3:2 default aspect
+    // when resolution is unknown.
+    const dimAttrs = r
+      ? `width="${r.w}" height="${r.h}"`
+      : `width="3000" height="2000"`;
     c.innerHTML = `
       <button class="iv-nav iv-prev" ${idx === 0 ? "disabled" : ""} aria-label="prev">‹</button>
       <button class="iv-nav iv-next" ${idx >= list.length - 1 ? "disabled" : ""} aria-label="next">›</button>
       <div class="iv-stage">
-        <img class="iv-img" src="${escapeAttr(cur.streamUrl)}" alt="${escapeAttr(cur.title)}">
+        <div class="iv-frame">
+          <img class="iv-img" src="${escapeAttr(cur.streamUrl)}" ${dimAttrs} alt="${escapeAttr(cur.title)}">
+        </div>
       </div>
       <div class="iv-bar">
         <div class="iv-title">${escapeHtml(cur.title)}</div>
-        <div class="iv-meta">${idx + 1} / ${list.length}</div>
+        <div class="iv-meta">${idx + 1} / ${list.length}${cur.resolution ? ` · ${cur.resolution}` : ""}</div>
         <div class="iv-url">
           <input id="dlna-url" value="${escapeAttr(cur.dlnaUrl)}" readonly>
           <button class="btn small ghost" onclick="copyUrl()">复制 DLNA</button>
@@ -109,9 +127,10 @@ function renderImageViewer(c, { streamUrl, dlnaUrl, title }) {
     `;
     c.querySelector(".iv-prev").addEventListener("click", () => { if (idx > 0) { idx--; paint(); } });
     c.querySelector(".iv-next").addEventListener("click", () => { if (idx < list.length - 1) { idx++; paint(); } });
-    // Click on image toggles zoom
     const img = c.querySelector(".iv-img");
     img.addEventListener("click", () => img.classList.toggle("zoom"));
+    img.addEventListener("load", () => img.classList.add("loaded"));
+    if (img.complete) img.classList.add("loaded");
   }
 
   // Keyboard navigation while modal open
@@ -134,14 +153,18 @@ function renderVideoPlayer(c, { streamUrl, dlnaUrl, title }) {
   c.classList.remove("audio-player-modal");
   c.classList.add("video-player-modal");
   c.innerHTML = `
-    <div class="vp-topbar">
-      <div class="vp-title">${escapeHtml(title)}</div>
+    <h2 class="vp-title">${escapeHtml(title)}</h2>
+    <div class="vp-stage">
+      <video class="vp-video" src="${streamUrl}" controls autoplay playsinline></video>
     </div>
-    <video class="vp-video" src="${streamUrl}" controls autoplay playsinline></video>
-    <div class="vp-bottombar">
-      <input id="dlna-url" value="${escapeAttr(dlnaUrl)}" readonly title="DLNA 直链给投影仪/小爱（minidlna 8200 端口）">
-      <button class="btn small" onclick="copyUrl()">复制 DLNA</button>
-      <span class="vp-hint">HEVC 在 Chrome / Cursor 解码不了 → 用 Safari，或把上面链接给投影仪</span>
+    <div class="vp-footer">
+      <div class="vp-url-row">
+        <input id="dlna-url" value="${escapeAttr(dlnaUrl)}" readonly>
+        <button class="btn small" onclick="copyUrl()">复制 DLNA 直链</button>
+      </div>
+      <p class="muted vp-hint">
+        视频一片黑？Insta360 默认 HEVC/H.265，Chrome / Cursor 不解码——用 Safari 或把直链给投影仪。
+      </p>
     </div>
   `;
 }
@@ -353,7 +376,8 @@ function initInfiniteScroll({ kind, folder, q, total, loaded, pageSize }) {
     return `<a class="media-card ${item.kind}" href="#"
       data-id="${item.id}" data-stream="${escapeAttr(item.stream_url)}"
       data-dlna="${escapeAttr(item.dlna_url)}" data-kind="${item.kind}"
-      data-title="${escapeAttr(item.title)}">
+      data-title="${escapeAttr(item.title)}"
+      data-resolution="${escapeAttr(item.resolution || '')}">
       <div class="thumb">
         <img loading="lazy" src="${escapeAttr(item.thumb_url)}"
           onload="this.classList.add('loaded');this.parentNode.classList.add('loaded')"
