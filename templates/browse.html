@@ -34,7 +34,7 @@
 <div class="folder-grid">
   {% for f in folders %}
   <a class="folder-card" href="{{ url_for('browse', kind=kind, folder=f.folder) }}">
-    <div class="ico">{% if kind == 'video' %}🎬{% else %}🎵{% endif %}</div>
+    <div class="ico">{% if kind == 'video' %}🎬{% elif kind == 'image' %}🖼{% elif kind == 'audio' %}🎵{% else %}📁{% endif %}</div>
     <div class="meta">
       <div class="title">{{ f.display }}</div>
       <div class="path">{{ f.folder }}</div>

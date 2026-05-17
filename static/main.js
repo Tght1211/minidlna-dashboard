@@ -75,15 +75,60 @@ function decodeEntities(s) {
 
 function renderImageViewer(c, { streamUrl, dlnaUrl, title }) {
   c.classList.remove("audio-player-modal");
-  c.innerHTML = `
-    <h2>${escapeHtml(title)}</h2>
-    <img src="${streamUrl}" style="max-width:100%;max-height:70vh;border-radius:6px;display:block;margin:14px auto 0;">
-    <div class="url-row">
-      <input id="dlna-url" value="${dlnaUrl}" readonly>
-      <button class="btn" onclick="copyUrl()">复制 DLNA 直链</button>
-    </div>
-  `;
+  c.classList.add("image-viewer-modal");
+  // Build navigable list from all image cards currently on the page.
+  const cards = [...document.querySelectorAll('[data-kind="image"]')];
+  const list = cards.map(el => ({
+    streamUrl: el.dataset.stream,
+    dlnaUrl: el.dataset.dlna,
+    title: decodeEntities(el.dataset.title),
+  }));
+  let idx = Math.max(0, list.findIndex(x => x.streamUrl === streamUrl));
+  if (idx === -1) {
+    list.unshift({ streamUrl, dlnaUrl, title });
+    idx = 0;
+  }
+
+  function paint() {
+    const cur = list[idx];
+    c.innerHTML = `
+      <button class="iv-nav iv-prev" ${idx === 0 ? "disabled" : ""} aria-label="prev">‹</button>
+      <button class="iv-nav iv-next" ${idx >= list.length - 1 ? "disabled" : ""} aria-label="next">›</button>
+      <div class="iv-stage">
+        <img class="iv-img" src="${escapeAttr(cur.streamUrl)}" alt="${escapeAttr(cur.title)}">
+      </div>
+      <div class="iv-bar">
+        <div class="iv-title">${escapeHtml(cur.title)}</div>
+        <div class="iv-meta">${idx + 1} / ${list.length}</div>
+        <div class="iv-url">
+          <input id="dlna-url" value="${escapeAttr(cur.dlnaUrl)}" readonly>
+          <button class="btn small ghost" onclick="copyUrl()">复制 DLNA</button>
+          <a class="btn small ghost" href="${escapeAttr(cur.streamUrl)}" download>下载原图</a>
+        </div>
+      </div>
+    `;
+    c.querySelector(".iv-prev").addEventListener("click", () => { if (idx > 0) { idx--; paint(); } });
+    c.querySelector(".iv-next").addEventListener("click", () => { if (idx < list.length - 1) { idx++; paint(); } });
+    // Click on image toggles zoom
+    const img = c.querySelector(".iv-img");
+    img.addEventListener("click", () => img.classList.toggle("zoom"));
+  }
+
+  // Keyboard navigation while modal open
+  function onKey(e) {
+    if (document.getElementById("modal").classList.contains("hidden")) {
+      document.removeEventListener("keydown", onKey);
+      return;
+    }
+    if (e.key === "ArrowLeft" && idx > 0) { idx--; paint(); }
+    else if (e.key === "ArrowRight" && idx < list.length - 1) { idx++; paint(); }
+  }
+  document.addEventListener("keydown", onKey);
+
+  paint();
 }
+
+function escapeAttr(s) { return String(s ?? "").replace(/"/g, "&quot;"); }
 
 function renderVideoPlayer(c, { streamUrl, dlnaUrl, title, host }) {
   c.classList.remove("audio-player-modal");
@@ -230,7 +275,9 @@ function wireAudioPlayer() {
 function closeModal(ev) {
   if (ev && ev.target.id !== "modal") return;
   const modal = document.getElementById("modal");
+  const body = document.querySelector(".modal-body");
   modal.classList.add("hidden");
+  if (body) body.classList.remove("audio-player-modal", "image-viewer-modal");
   document.getElementById("modal-content").innerHTML = "";
 }
 

@@ -356,6 +356,88 @@ main {
   font-family: var(--mono); font-size: 12px;
 }
 
+/* ---------- image viewer (lightbox) ---------- */
+.modal-body.image-viewer-modal {
+  max-width: 100%;
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  background: rgba(8, 10, 14, 0.96);
+  border-radius: 0;
+  padding: 0;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.modal-body.image-viewer-modal .close {
+  top: 20px; right: 28px;
+  font-size: 28px;
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+  z-index: 10;
+}
+.iv-stage {
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 60px 80px 0;
+  overflow: auto;
+}
+.iv-img {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+  cursor: zoom-in;
+  user-select: none;
+  border-radius: 4px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  transition: max-width 0.2s, max-height 0.2s;
+}
+.iv-img.zoom {
+  max-width: none; max-height: none;
+  cursor: zoom-out;
+}
+.iv-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 56px; height: 56px; border-radius: 50%;
+  background: rgba(255,255,255,0.06); color: #fff;
+  border: none; cursor: pointer;
+  font-size: 32px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+  z-index: 5;
+}
+.iv-nav:hover:not([disabled]) { background: rgba(0,230,195,0.25); color: var(--accent); }
+.iv-nav[disabled] { opacity: 0.2; cursor: not-allowed; }
+.iv-prev { left: 18px; }
+.iv-next { right: 18px; }
+.iv-bar {
+  padding: 18px 28px 22px;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.7));
+  display: flex; flex-direction: column; gap: 6px;
+}
+.iv-title {
+  color: #fff; font-size: 14px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.iv-meta {
+  color: var(--text-muted); font-size: 12px;
+  font-family: var(--mono);
+}
+.iv-url {
+  display: flex; gap: 6px; margin-top: 6px;
+}
+.iv-url input {
+  flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-dim); padding: 6px 10px; border-radius: 5px;
+  font-family: var(--mono); font-size: 11px;
+}
+.iv-url .btn { white-space: nowrap; text-decoration: none; }
+
+@media (max-width: 700px) {
+  .iv-stage { padding: 60px 12px 0; }
+  .iv-nav { width: 40px; height: 40px; font-size: 24px; }
+  .iv-prev { left: 6px; } .iv-next { right: 6px; }
+}
+
 /* ---------- audio player ---------- */
 .modal-body.audio-player-modal {
   max-width: 460px;
