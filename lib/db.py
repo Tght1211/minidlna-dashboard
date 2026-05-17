@@ -73,6 +73,24 @@ def search(query: str, limit: int = 100) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
+_NOISE_DIR_NAMES = {"DCIM", "Camera", "Movies", "Pictures", "Download", "Downloads"}
+
+
+def _smart_display(folder: str) -> str:
+    """Pick a short, disambiguating label for a folder full of media.
+    Last path component alone is often a generic 'Camera01' that repeats across
+    parent date dirs, so prepend the nearest non-noise ancestor when needed."""
+    parts = [p for p in folder.split("/") if p]
+    if not parts:
+        return folder
+    last = parts[-1]
+    # walk up looking for a meaningful ancestor (not generic camera/dcim names)
+    for ancestor in reversed(parts[:-1]):
+        if ancestor not in _NOISE_DIR_NAMES and not ancestor.lower().startswith("camera"):
+            return f"{ancestor} / {last}"
+    return last
+
+
 def folders(kind: str) -> list[dict[str, Any]]:
     """Group items by their parent folder."""
     mime_filter = f"{kind}/%"
@@ -83,7 +101,13 @@ def folders(kind: str) -> list[dict[str, Any]]:
     buckets: dict[str, dict[str, Any]] = {}
     for r in rows:
         folder = os.path.dirname(r["PATH"])
-        b = buckets.setdefault(folder, {"folder": folder, "count": 0, "size": 0, "sample_id": r["ID"]})
+        b = buckets.setdefault(folder, {
+            "folder": folder,
+            "display": _smart_display(folder),
+            "count": 0,
+            "size": 0,
+            "sample_id": r["ID"],
+        })
         b["count"] += 1
         b["size"] += int(r["SIZE"] or 0)
     return sorted(buckets.values(), key=lambda x: x["folder"])
