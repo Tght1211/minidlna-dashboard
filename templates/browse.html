@@ -65,7 +65,9 @@
   <a class="media-card {{ ik }}" href="#" data-id="{{ it.ID }}" data-stream="{{ it.stream_url }}" data-dlna="{{ it.dlna_url }}" data-kind="{{ ik }}" data-title="{{ it.TITLE }}">
     <div class="thumb">
       {% if ik in ('video', 'image') %}
-      <img loading="lazy" src="{{ url_for('thumb', detail_id=it.ID) }}" onerror="this.parentNode.classList.add('noimg')">
+      <img loading="lazy" src="{{ url_for('thumb', detail_id=it.ID) }}"
+           onload="this.classList.add('loaded');this.parentNode.classList.add('loaded')"
+           onerror="this.parentNode.classList.add('noimg')">
       {% else %}
       <span class="audio-glyph">♪</span>
       {% endif %}

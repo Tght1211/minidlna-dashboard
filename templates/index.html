@@ -93,7 +93,9 @@
   <div class="media-grid">
     {% for v in recent_video %}
     <a class="media-card" href="#" data-id="{{ v.ID }}" data-stream="{{ v.stream_url }}" data-dlna="{{ v.dlna_url }}" data-kind="video" data-title="{{ v.TITLE }}">
-      <div class="thumb"><img loading="lazy" src="{{ url_for('thumb', detail_id=v.ID) }}" onerror="this.parentNode.classList.add('noimg')"></div>
+      <div class="thumb"><img loading="lazy" src="{{ url_for('thumb', detail_id=v.ID) }}"
+        onload="this.classList.add('loaded');this.parentNode.classList.add('loaded')"
+        onerror="this.parentNode.classList.add('noimg')"></div>
       <div class="meta">
         <div class="title">{{ v.TITLE }}</div>
         <div class="sub">{{ v.DURATION|duration }} · {{ v.RESOLUTION or '' }}</div>

@@ -343,7 +343,9 @@ function initInfiniteScroll({ kind, folder, q, total, loaded, pageSize }) {
       data-dlna="${escapeAttr(item.dlna_url)}" data-kind="${item.kind}"
       data-title="${escapeAttr(item.title)}">
       <div class="thumb">
-        <img loading="lazy" src="${escapeAttr(item.thumb_url)}" onerror="this.parentNode.classList.add('noimg')">
+        <img loading="lazy" src="${escapeAttr(item.thumb_url)}"
+          onload="this.classList.add('loaded');this.parentNode.classList.add('loaded')"
+          onerror="this.parentNode.classList.add('noimg')">
         ${badge}
       </div>
       <div class="meta">
