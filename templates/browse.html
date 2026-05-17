@@ -62,7 +62,7 @@
 <div class="media-grid" id="items-container">
   {% for it in items %}
   {% set ik = item_kind(it.MIME or '') %}
-  <a class="media-card {{ ik }}" href="#" data-id="{{ it.ID }}" data-stream="{{ it.stream_url }}" data-dlna="{{ it.dlna_url }}" data-kind="{{ ik }}" data-title="{{ it.TITLE }}" data-resolution="{{ it.RESOLUTION or '' }}">
+  <a class="media-card {{ ik }}" href="#" data-id="{{ it.ID }}" data-stream="{{ it.stream_url }}" data-dlna="{{ it.dlna_url }}" data-kind="{{ ik }}" data-title="{{ it.TITLE }}" data-resolution="{{ it.RESOLUTION or '' }}" data-duration="{{ it.DURATION or '' }}">
     <div class="thumb">
       {% if ik in ('video', 'image') %}
       <img loading="lazy" src="{{ url_for('thumb', detail_id=it.ID) }}"

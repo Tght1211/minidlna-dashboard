@@ -116,7 +116,7 @@
   <h3>最近视频 <a class="more" href="{{ url_for('browse', kind='video') }}">全部 →</a></h3>
   <div class="row-scroll">
     {% for v in recent_video %}
-    <a class="media-card" href="#" data-id="{{ v.ID }}" data-stream="{{ v.stream_url }}" data-dlna="{{ v.dlna_url }}" data-kind="video" data-title="{{ v.TITLE }}">
+    <a class="media-card" href="#" data-id="{{ v.ID }}" data-stream="{{ v.stream_url }}" data-dlna="{{ v.dlna_url }}" data-kind="video" data-title="{{ v.TITLE }}" data-resolution="{{ v.RESOLUTION or '' }}">
       <div class="thumb"><img loading="lazy" src="{{ url_for('thumb', detail_id=v.ID) }}"
         onload="this.classList.add('loaded');this.parentNode.classList.add('loaded')"
         onerror="this.parentNode.classList.add('noimg')"><span class="hover-play">▶</span></div>

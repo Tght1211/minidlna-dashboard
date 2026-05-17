@@ -614,20 +614,31 @@ main {
   margin-right: 6px;
   filter: drop-shadow(0 0 4px var(--accent-glow));
 }
+.vp-res {
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 10px;
+  letter-spacing: 1px;
+}
 .vp-stage {
   position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  /* Cap height so the footer is always visible: title (~24px) + gap (24px)
-     + footer (~70px) + padding (32px) ≈ 150px reserved. */
+  /* width / aspect-ratio set inline based on the actual video so the stage
+     matches the video exactly — no letterboxing above or below. */
+  max-width: 100%;
   max-height: calc(100vh - 170px);
   margin-bottom: 24px;
   background: #000;
   overflow: hidden;
   box-shadow: 0 0 32px rgba(0,230,195,0.08);
-  /* center the stage horizontally when max-height kicks in and aspect ratio
-     makes width less than 100% */
   align-self: center;
+}
+/* When aspect makes the stage narrower than the modal, the inline
+   width=100% would still stretch it. Keep the stage at its natural
+   aspect width. */
+.vp-stage { width: auto; }
+.vp-stage[style*="aspect-ratio"] {
+  /* fill horizontally up to max, height follows from aspect */
+  width: 100%;
 }
 .vp-video {
   width: 100%; height: 100%;

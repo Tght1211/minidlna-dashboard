@@ -44,7 +44,7 @@ async function removeDir(path) {
   }
 }
 
-function openItem(id, streamUrl, dlnaUrl, kind, title) {
+function openItem(id, streamUrl, dlnaUrl, kind, title, resolution) {
   const modal = document.getElementById("modal");
   const c = document.getElementById("modal-content");
   const host = location.hostname;
@@ -53,9 +53,9 @@ function openItem(id, streamUrl, dlnaUrl, kind, title) {
   if (kind === "audio") {
     renderAudioPlayer(c, { id, streamUrl, dlnaUrl, title: cleanTitle });
   } else if (kind === "image") {
-    renderImageViewer(c, { id, streamUrl, dlnaUrl, title: cleanTitle });
+    renderImageViewer(c, { id, streamUrl, dlnaUrl, title: cleanTitle, resolution });
   } else {
-    renderVideoPlayer(c, { id, streamUrl, dlnaUrl, title: cleanTitle, host });
+    renderVideoPlayer(c, { id, streamUrl, dlnaUrl, title: cleanTitle, resolution, host });
   }
 }
 
@@ -149,12 +149,16 @@ function renderImageViewer(c, { streamUrl, dlnaUrl, title, resolution }) {
 
 function escapeAttr(s) { return String(s ?? "").replace(/"/g, "&quot;"); }
 
-function renderVideoPlayer(c, { streamUrl, dlnaUrl, title }) {
+function renderVideoPlayer(c, { streamUrl, dlnaUrl, title, resolution }) {
   c.classList.remove("audio-player-modal");
   c.classList.add("video-player-modal");
+  // Use the file's actual aspect so the stage matches the video exactly —
+  // no black bars above/below. Fall back to 16/9 if unknown.
+  const m = String(resolution || "").match(/(\d+)x(\d+)/);
+  const aspect = m ? `${m[1]}/${m[2]}` : "16/9";
   c.innerHTML = `
-    <h2 class="vp-title">${escapeHtml(title)}</h2>
-    <div class="vp-stage">
+    <h2 class="vp-title">${escapeHtml(title)}${resolution ? ` <span class="vp-res">${escapeHtml(resolution)}</span>` : ""}</h2>
+    <div class="vp-stage" style="aspect-ratio: ${aspect};">
       <video class="vp-video" src="${streamUrl}" controls autoplay playsinline></video>
     </div>
     <div class="vp-footer">
@@ -432,5 +436,6 @@ document.addEventListener("click", e => {
     el.dataset.dlna,
     el.dataset.kind,
     el.dataset.title,
+    el.dataset.resolution || "",
   );
 });
