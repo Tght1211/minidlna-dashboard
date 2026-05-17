@@ -92,7 +92,7 @@
   <h3>最近视频 <a class="more" href="{{ url_for('browse', kind='video') }}">全部 →</a></h3>
   <div class="media-grid">
     {% for v in recent_video %}
-    <a class="media-card" href="#" onclick="openItem({{ v.ID }}, '{{ v.stream_url }}', 'video', {{ v.TITLE|tojson }}); return false;">
+    <a class="media-card" href="#" data-id="{{ v.ID }}" data-stream="{{ v.stream_url }}" data-dlna="{{ v.dlna_url }}" data-kind="video" data-title="{{ v.TITLE }}">
       <div class="thumb"><img loading="lazy" src="{{ url_for('thumb', detail_id=v.ID) }}" onerror="this.parentNode.classList.add('noimg')"></div>
       <div class="meta">
         <div class="title">{{ v.TITLE }}</div>
@@ -109,7 +109,7 @@
   <h3>最近音频 <a class="more" href="{{ url_for('browse', kind='audio') }}">全部 →</a></h3>
   <div class="media-list">
     {% for a in recent_audio %}
-    <a class="row-item" href="#" onclick="openItem({{ a.ID }}, '{{ a.stream_url }}', 'audio', {{ a.TITLE|tojson }}); return false;">
+    <a class="row-item" href="#" data-id="{{ a.ID }}" data-stream="{{ a.stream_url }}" data-dlna="{{ a.dlna_url }}" data-kind="audio" data-title="{{ a.TITLE }}">
       <span class="ico">♪</span>
       <span class="title">{{ a.TITLE }}</span>
       <span class="sub">{{ a.DURATION|duration }}</span>

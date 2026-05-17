@@ -44,21 +44,29 @@ async function removeDir(path) {
   }
 }
 
-function openItem(id, url, kind, title) {
+function openItem(id, streamUrl, dlnaUrl, kind, title) {
   const modal = document.getElementById("modal");
   const c = document.getElementById("modal-content");
-  const tag = kind === "video"
-    ? `<video src="${url}" controls autoplay></video>`
-    : `<audio src="${url}" controls autoplay></audio>`;
+  const host = location.hostname;
+  const jellyfinHome = `http://${host}:8096/`;
+  const playerTag = kind === "video"
+    ? `<video src="${streamUrl}" controls autoplay playsinline></video>`
+    : `<audio src="${streamUrl}" controls autoplay></audio>`;
+  const hevcHint = kind === "video"
+    ? `<p class="muted" style="margin-top: 8px;">
+         视频是否一片黑？Insta360 默认 HEVC/H.265 编码，Chrome / Cursor 内置浏览器不解码，
+         <a href="${jellyfinHome}" target="_blank">用 Jellyfin 打开</a> 会自动转码 H.264。
+       </p>`
+    : "";
   c.innerHTML = `
     <h2>${escapeHtml(title)}</h2>
-    <div class="muted">${url}</div>
-    ${tag}
+    ${playerTag}
+    ${hevcHint}
     <div class="url-row">
-      <input id="dlna-url" value="${url}" readonly>
-      <button class="btn" onclick="copyUrl()">复制链接</button>
+      <input id="dlna-url" value="${dlnaUrl}" readonly>
+      <button class="btn" onclick="copyUrl()">复制 DLNA 直链</button>
     </div>
-    <p class="muted" style="margin-top: 10px;">小爱/电视等 DLNA 客户端会通过原生 8200 端口访问这个 URL。</p>
+    <p class="muted" style="margin-top: 10px;">DLNA 直链给投影仪/小爱等局域网客户端用（minidlna 8200 端口）。</p>
   `;
   modal.classList.remove("hidden");
 }
@@ -88,4 +96,18 @@ function escapeHtml(s) {
 
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeModal();
+});
+
+// Delegate clicks on .media-card / .row-item to the player modal.
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-stream]");
+  if (!el) return;
+  e.preventDefault();
+  openItem(
+    el.dataset.id,
+    el.dataset.stream,
+    el.dataset.dlna,
+    el.dataset.kind,
+    el.dataset.title,
+  );
 });

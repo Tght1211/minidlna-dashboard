@@ -78,9 +78,34 @@ def _media_base_url() -> str:
     return f"http://{host}:8200"
 
 
-def _stream_url(detail_id: int, path: str | None, mime: str | None) -> str:
+def _dlna_url(detail_id: int, path: str | None, mime: str | None) -> str:
+    """The minidlna direct URL — works for projectors/TVs on the LAN, NOT for
+    browsers on the same Mac (minidlna's network_interface=en0 rejects
+    connections that route via loopback)."""
     ext = db.file_extension(path, mime)
     return f"{_media_base_url()}/MediaItems/{detail_id}.{ext}"
+
+
+def _stream_url(detail_id: int, *_args, **_kwargs) -> str:
+    """In-browser playback URL — served by THIS app directly from disk so it
+    works regardless of minidlna's interface binding."""
+    return url_for("stream", detail_id=detail_id)
+
+
+def _is_hevc(info: dict) -> bool:
+    """Best-effort guess: minidlna's DLNA_PN field encodes the codec profile."""
+    pn = (info.get("DLNA_PN") or "").upper()
+    if "H265" in pn or "HEVC" in pn:
+        return True
+    # minidlna often doesn't set DLNA_PN for HEVC; rely on container hints.
+    # The Insta360 source we already verified is HEVC across the board, but
+    # we can't know without ffprobe. Default false; the client can fall back.
+    return False
+
+
+def _jellyfin_base() -> str:
+    host = request.host.split(":")[0]
+    return f"http://{host}:8096"
 
 
 # ---------- views ----------
@@ -100,7 +125,8 @@ def index():
     recent_video = db.recent(limit=8, kind="video")
     recent_audio = db.recent(limit=8, kind="audio")
     for item in recent_video + recent_audio:
-        item["stream_url"] = _stream_url(item["ID"], item.get("PATH"), item.get("MIME"))
+        item["stream_url"] = _stream_url(item["ID"])
+        item["dlna_url"] = _dlna_url(item["ID"], item.get("PATH"), item.get("MIME"))
     return render_template(
         "index.html",
         counts=counts,
@@ -135,7 +161,8 @@ def browse():
     else:
         folders_list = db.folders(kind)
     for it in items:
-        it["stream_url"] = _stream_url(it["ID"], it.get("PATH"), it.get("MIME"))
+        it["stream_url"] = _stream_url(it["ID"])
+        it["dlna_url"] = _dlna_url(it["ID"], it.get("PATH"), it.get("MIME"))
     return render_template(
         "browse.html",
         kind=kind, group=group, folder=folder, q=q,
@@ -153,6 +180,23 @@ def settings_page():
         log=config.log_tail(120),
         watcher=watcher.state_snapshot(),
         process=status.minidlna_process(),
+    )
+
+
+# ---------- streaming ----------
+
+@app.route("/stream/<int:detail_id>")
+def stream(detail_id: int):
+    """Stream the file directly from disk so it plays in any browser on this
+    Mac (minidlna's HTTP server rejects connections that route via loopback)."""
+    info = db.item(detail_id)
+    if not info or not info.get("PATH") or not os.path.exists(info["PATH"]):
+        abort(404)
+    return send_file(
+        info["PATH"],
+        mimetype=info.get("MIME") or "application/octet-stream",
+        conditional=True,  # enables HTTP Range / seek
+        max_age=0,
     )
 
 
