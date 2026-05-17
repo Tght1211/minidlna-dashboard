@@ -130,15 +130,14 @@ function renderImageViewer(c, { streamUrl, dlnaUrl, title }) {
 
 function escapeAttr(s) { return String(s ?? "").replace(/"/g, "&quot;"); }
 
-function renderVideoPlayer(c, { streamUrl, dlnaUrl, title, host }) {
+function renderVideoPlayer(c, { streamUrl, dlnaUrl, title }) {
   c.classList.remove("audio-player-modal");
-  const jellyfinHome = `http://${host}:8096/`;
   c.innerHTML = `
     <h2>${escapeHtml(title)}</h2>
     <video src="${streamUrl}" controls autoplay playsinline></video>
     <p class="muted" style="margin-top: 8px;">
-      视频一片黑？Insta360 默认 HEVC/H.265 编码,Chrome / Cursor 内置浏览器不解码,
-      <a href="${jellyfinHome}" target="_blank">用 Jellyfin 打开</a> 会自动转码 H.264。
+      视频一片黑？Insta360 默认 HEVC/H.265 编码，Chrome / Cursor 内置浏览器不解码。
+      用 Safari 打开本页或在系统播放器里看原文件。
     </p>
     <div class="url-row">
       <input id="dlna-url" value="${dlnaUrl}" readonly>
