@@ -588,57 +588,114 @@ main {
   font-family: var(--mono); font-size: 12px;
 }
 
-/* ---------- video player modal ---------- */
+/* ---------- video player (theater) ---------- */
 .modal-body.video-player-modal {
-  max-width: 1100px;
-  width: min(1100px, 92vw);
-  padding: 22px 24px 18px;
-  display: flex; flex-direction: column;
-  gap: 14px;
-  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+  max-width: 100%;
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  background: #000;
+  border: none;
+  border-radius: 0;
+  clip-path: none;
+  padding: 0;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: none;
+}
+.modal-body.video-player-modal::before {
+  /* keep the thin top neon line as a HUD touch */
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
+  opacity: 0.5; z-index: 20;
 }
 .modal-body.video-player-modal .close {
-  top: 14px; right: 16px; z-index: 10;
+  top: 18px; right: 24px;
+  font-size: 22px;
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+  z-index: 30;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s;
 }
+.modal-body.video-player-modal .close:hover {
+  background: rgba(0,230,195,0.2);
+  color: var(--accent);
+}
+
+.vp-topbar {
+  position: absolute; top: 0; left: 0; right: 64px;
+  padding: 22px 28px 40px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0; transition: opacity 0.25s;
+}
+.modal-body.video-player-modal:hover .vp-topbar { opacity: 1; }
+
 .vp-title {
-  font-size: 14px; font-weight: 600;
-  font-family: var(--mono); letter-spacing: 1px;
-  color: var(--text);
-  margin: 0; padding-right: 32px;
+  font-size: 13px; font-weight: 600;
+  font-family: var(--mono); letter-spacing: 1.5px;
+  color: #fff;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
-.vp-stage {
-  /* maintain 16:9 frame even while video buffers */
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #000;
-  border: 1px solid var(--border);
-  overflow: hidden;
-  box-shadow: 0 0 24px rgba(0,230,195,0.08), inset 0 0 0 1px rgba(0,230,195,0.06);
+.vp-title::before {
+  content: "◢ ";
+  color: var(--accent);
+  margin-right: 6px;
+  filter: drop-shadow(0 0 4px var(--accent-glow));
 }
+
 .vp-video {
-  width: 100%; height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  width: auto;
+  height: auto;
+  /* keep a sane min frame while metadata loads */
+  min-width: min(85vw, 1100px);
+  min-height: min(48vw, 620px);
   display: block;
   background: #000;
   object-fit: contain;
+  outline: none;
 }
-.vp-footer {
-  display: flex; flex-direction: column; gap: 8px;
+
+.vp-bottombar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 28px 28px 22px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.78) 0%, transparent 100%);
+  z-index: 10;
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0; transition: opacity 0.25s;
 }
-.vp-url-row {
-  display: flex; gap: 8px;
-}
-.vp-url-row input {
-  flex: 1;
-  background: var(--bg-soft); border: 1px solid var(--border);
-  color: var(--text-dim); padding: 7px 11px;
+.modal-body.video-player-modal:hover .vp-bottombar { opacity: 1; }
+
+.vp-bottombar input {
+  flex: 0 1 360px;
+  min-width: 0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-dim);
+  padding: 7px 11px;
   font-family: var(--mono); font-size: 11px;
 }
-.vp-hint {
+.vp-bottombar input:focus {
+  outline: none; border-color: var(--accent); color: var(--text);
+}
+.vp-bottombar .vp-hint {
   font-size: 11px; color: var(--text-muted);
-  margin: 0; line-height: 1.6;
-  letter-spacing: 0.3px;
+  margin-left: auto;
+  font-family: var(--mono); letter-spacing: 0.5px;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+@media (max-width: 700px) {
+  .vp-bottombar { flex-wrap: wrap; }
+  .vp-bottombar .vp-hint { margin-left: 0; white-space: normal; font-size: 10px; }
+  .vp-video { min-width: 90vw; min-height: 50vw; }
 }
 
 /* ---------- image viewer (lightbox) ---------- */

@@ -134,18 +134,14 @@ function renderVideoPlayer(c, { streamUrl, dlnaUrl, title }) {
   c.classList.remove("audio-player-modal");
   c.classList.add("video-player-modal");
   c.innerHTML = `
-    <h2 class="vp-title">${escapeHtml(title)}</h2>
-    <div class="vp-stage">
-      <video class="vp-video" src="${streamUrl}" controls autoplay playsinline></video>
+    <div class="vp-topbar">
+      <div class="vp-title">${escapeHtml(title)}</div>
     </div>
-    <div class="vp-footer">
-      <div class="vp-url-row">
-        <input id="dlna-url" value="${escapeAttr(dlnaUrl)}" readonly>
-        <button class="btn small" onclick="copyUrl()">复制 DLNA 直链</button>
-      </div>
-      <p class="muted vp-hint">
-        视频一片黑？Insta360 默认 HEVC/H.265，Chrome / Cursor 内置浏览器不解码——用 Safari 打开本页，或把 DLNA 直链给投影仪/小爱（minidlna 8200 端口）。
-      </p>
+    <video class="vp-video" src="${streamUrl}" controls autoplay playsinline></video>
+    <div class="vp-bottombar">
+      <input id="dlna-url" value="${escapeAttr(dlnaUrl)}" readonly title="DLNA 直链给投影仪/小爱（minidlna 8200 端口）">
+      <button class="btn small" onclick="copyUrl()">复制 DLNA</button>
+      <span class="vp-hint">HEVC 在 Chrome / Cursor 解码不了 → 用 Safari，或把上面链接给投影仪</span>
     </div>
   `;
 }
