@@ -300,6 +300,19 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeModal();
 });
 
+// HUD clock
+(function clock() {
+  const el = document.getElementById("hud-clock");
+  if (!el) return;
+  function tick() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    el.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+
 function initInfiniteScroll({ kind, folder, q, total, loaded, pageSize }) {
   const container = document.getElementById("items-container");
   const sentinel = document.getElementById("load-sentinel");
@@ -347,6 +360,7 @@ function initInfiniteScroll({ kind, folder, q, total, loaded, pageSize }) {
           onload="this.classList.add('loaded');this.parentNode.classList.add('loaded')"
           onerror="this.parentNode.classList.add('noimg')">
         ${badge}
+        <span class="hover-play">▶</span>
       </div>
       <div class="meta">
         <div class="title">${escapeHtml(item.title)}</div>

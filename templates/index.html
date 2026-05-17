@@ -2,6 +2,30 @@
 {% block title %}概览 · 家庭媒体库{% endblock %}
 {% block content %}
 
+{% if hero %}
+<section class="hero" style="background-image: linear-gradient(180deg, rgba(6,8,13,0.4) 0%, rgba(6,8,13,0.85) 70%, var(--bg) 100%), url('{{ url_for('thumb', detail_id=hero.ID) }}');">
+  <div class="hero-corner hero-corner-tl"></div>
+  <div class="hero-corner hero-corner-tr"></div>
+  <div class="hero-corner hero-corner-bl"></div>
+  <div class="hero-corner hero-corner-br"></div>
+  <div class="hero-content">
+    <div class="hero-label">▸ FEATURED · {{ hero.MIME }} · {{ hero.RESOLUTION }}</div>
+    <h1 class="hero-title">{{ hero.TITLE }}</h1>
+    <div class="hero-meta">
+      <span>{{ hero.DURATION|duration }}</span>
+      <span class="dot">·</span>
+      <span>{{ hero.SIZE|filesize }}</span>
+      <span class="dot">·</span>
+      <span>{{ hero.TIMESTAMP|ago }}</span>
+    </div>
+    <div class="hero-actions">
+      <a class="btn" href="#" data-id="{{ hero.ID }}" data-stream="{{ hero.stream_url }}" data-dlna="{{ hero.dlna_url }}" data-kind="video" data-title="{{ hero.TITLE }}">▶ 播放</a>
+      <a class="btn ghost" href="{{ url_for('browse', kind='video') }}">浏览全部视频</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {% if dlna_status.scan_in_progress %}
 <div class="banner banner-scan">
   <span class="spinner"></span>
@@ -90,15 +114,38 @@
 {% if recent_video %}
 <section class="card">
   <h3>最近视频 <a class="more" href="{{ url_for('browse', kind='video') }}">全部 →</a></h3>
-  <div class="media-grid">
+  <div class="row-scroll">
     {% for v in recent_video %}
     <a class="media-card" href="#" data-id="{{ v.ID }}" data-stream="{{ v.stream_url }}" data-dlna="{{ v.dlna_url }}" data-kind="video" data-title="{{ v.TITLE }}">
       <div class="thumb"><img loading="lazy" src="{{ url_for('thumb', detail_id=v.ID) }}"
         onload="this.classList.add('loaded');this.parentNode.classList.add('loaded')"
-        onerror="this.parentNode.classList.add('noimg')"></div>
+        onerror="this.parentNode.classList.add('noimg')"><span class="hover-play">▶</span></div>
       <div class="meta">
         <div class="title">{{ v.TITLE }}</div>
         <div class="sub">{{ v.DURATION|duration }} · {{ v.RESOLUTION or '' }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if recent_image %}
+<section class="card">
+  <h3>最近照片 <a class="more" href="{{ url_for('browse', kind='image') }}">全部 →</a></h3>
+  <div class="row-scroll">
+    {% for p in recent_image %}
+    <a class="media-card image" href="#" data-id="{{ p.ID }}" data-stream="{{ p.stream_url }}" data-dlna="{{ p.dlna_url }}" data-kind="image" data-title="{{ p.TITLE }}">
+      <div class="thumb">
+        <img loading="lazy" src="{{ url_for('thumb', detail_id=p.ID) }}"
+          onload="this.classList.add('loaded');this.parentNode.classList.add('loaded')"
+          onerror="this.parentNode.classList.add('noimg')">
+        <span class="badge badge-image">PHOTO</span>
+        <span class="hover-play">⊕</span>
+      </div>
+      <div class="meta">
+        <div class="title">{{ p.TITLE }}</div>
+        <div class="sub">{{ p.RESOLUTION or '—' }} · {{ p.SIZE|filesize }}</div>
       </div>
     </a>
     {% endfor %}

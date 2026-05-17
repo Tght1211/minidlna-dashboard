@@ -10,15 +10,16 @@
 <body>
 <header class="top">
   <div class="brand">
-    <span class="logo">▶</span>
+    <span class="logo">◢</span>
     <span class="name">家庭媒体库</span>
-    <span class="sub">DLNA Dashboard</span>
+    <span class="sub">v1 · NODE/{{ request.host.split(':')[0].split('.')[-1] }}</span>
+    <span class="hud-status"><span class="dot"></span>SYSTEM ONLINE</span>
   </div>
   <nav class="nav">
+    <span class="hud-clock" id="hud-clock">--:--:--</span>
     <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">概览</a>
-    <a href="{{ url_for('browse', kind='video') }}" class="{% if request.endpoint == 'browse' %}active{% endif %}">媒体库</a>
+    <a href="{{ url_for('browse', kind='all') }}" class="{% if request.endpoint == 'browse' %}active{% endif %}">媒体库</a>
     <a href="{{ url_for('settings_page') }}" class="{% if request.endpoint == 'settings_page' %}active{% endif %}">设置</a>
-    <a href="http://{{ request.host.split(':')[0] }}:8200/" target="_blank" class="ext" title="minidlna 原生状态页">⎘ 原页</a>
   </nav>
 </header>
 
@@ -27,9 +28,13 @@
 </main>
 
 <footer class="footer">
-  <span>minidlna-dashboard · 端口 8201</span>
-  <span class="dot">·</span>
-  <span>访问地址 <code>http://{{ request.host }}/</code></span>
+  <span>NODE://minidlna-dashboard</span>
+  <span class="dot">/</span>
+  <span>PORT 8201</span>
+  <span class="dot">/</span>
+  <span>UPLINK <code>{{ request.host }}</code></span>
+  <span class="dot">/</span>
+  <span style="margin-left:auto;color:var(--accent)">◉ CONNECTED</span>
 </footer>
 
 <div id="modal" class="modal hidden" onclick="closeModal(event)">

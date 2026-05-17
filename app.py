@@ -122,11 +122,17 @@ def index():
         usage = status.disk_usage_for(md.path)
         if usage:
             disk[md.path] = usage
-    recent_video = db.recent(limit=8, kind="video")
+    recent_video = db.recent(limit=12, kind="video")
     recent_audio = db.recent(limit=8, kind="audio")
-    for item in recent_video + recent_audio:
+    recent_image = db.recent(limit=12, kind="image")
+    for item in recent_video + recent_audio + recent_image:
         item["stream_url"] = _stream_url(item["ID"])
         item["dlna_url"] = _dlna_url(item["ID"], item.get("PATH"), item.get("MIME"))
+    # pick a hero — newest video with a cached thumb if any, else newest video
+    hero = next(
+        (v for v in recent_video if thumbs.has_thumb(v["ID"])),
+        recent_video[0] if recent_video else None,
+    )
     return render_template(
         "index.html",
         counts=counts,
@@ -137,6 +143,8 @@ def index():
         disk=disk,
         recent_video=recent_video,
         recent_audio=recent_audio,
+        recent_image=recent_image,
+        hero=hero,
         watcher=watcher.state_snapshot(),
         thumb_cache=thumbs.cache_stats(),
         db_size=db.db_size(),
