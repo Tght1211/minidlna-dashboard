@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Mac音乐库 · DLNA{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🎬</text></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo">▶</span>
+    <span class="name">Mac音乐库</span>
+    <span class="sub">DLNA Dashboard</span>
+  </div>
+  <nav class="nav">
+    <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">概览</a>
+    <a href="{{ url_for('browse', kind='video') }}" class="{% if request.endpoint == 'browse' %}active{% endif %}">媒体库</a>
+    <a href="{{ url_for('settings_page') }}" class="{% if request.endpoint == 'settings_page' %}active{% endif %}">设置</a>
+    <a href="http://{{ request.host.split(':')[0] }}:8200/" target="_blank" class="ext" title="minidlna 原生状态页">⎘ 原页</a>
+  </nav>
+</header>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <span>minidlna-dashboard · 端口 8201</span>
+  <span class="dot">·</span>
+  <span>访问地址 <code>http://{{ request.host }}/</code></span>
+</footer>
+
+<div id="modal" class="modal hidden" onclick="closeModal(event)">
+  <div class="modal-body" onclick="event.stopPropagation()">
+    <button class="close" onclick="closeModal()">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

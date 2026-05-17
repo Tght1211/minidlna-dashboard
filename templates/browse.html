@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}媒体库 · Mac音乐库{% endblock %}
+{% block content %}
+
+<div class="browse-bar">
+  <div class="tabs">
+    <a href="{{ url_for('browse', kind='video') }}" class="tab {% if kind == 'video' %}active{% endif %}">视频</a>
+    <a href="{{ url_for('browse', kind='audio') }}" class="tab {% if kind == 'audio' %}active{% endif %}">音乐</a>
+  </div>
+  <form class="search" method="get" action="{{ url_for('browse') }}">
+    <input type="hidden" name="kind" value="{{ kind }}">
+    <input type="text" name="q" value="{{ q }}" placeholder="搜索标题 / 艺术家 / 专辑 / 路径…" autocomplete="off">
+    {% if q or folder %}<a class="link" href="{{ url_for('browse', kind=kind) }}">清除</a>{% endif %}
+  </form>
+</div>
+
+{% if folder %}
+<div class="crumbs">
+  <a href="{{ url_for('browse', kind=kind) }}">所有文件夹</a>
+  <span class="sep">/</span>
+  <code>{{ folder }}</code>
+  <span class="muted">· {{ items|length }} 项</span>
+</div>
+{% elif q %}
+<div class="crumbs">
+  搜索 <code>{{ q }}</code>
+  <span class="muted">· {{ items|length }} 条结果</span>
+</div>
+{% endif %}
+
+{% if folders %}
+<div class="folder-grid">
+  {% for f in folders %}
+  <a class="folder-card" href="{{ url_for('browse', kind=kind, folder=f.folder) }}">
+    <div class="ico">{% if kind == 'video' %}🎬{% else %}🎵{% endif %}</div>
+    <div class="meta">
+      <div class="title">{{ f.folder.split('/')[-1] or f.folder }}</div>
+      <div class="path">{{ f.folder }}</div>
+      <div class="sub">{{ f.count }} 项 · {{ f.size|filesize }}</div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if items %}
+{% if kind == 'video' %}
+<div class="media-grid">
+  {% for v in items %}
+  <a class="media-card" href="#" onclick="openItem({{ v.ID }}, '{{ v.stream_url }}', 'video', {{ v.TITLE|tojson }}); return false;">
+    <div class="thumb"><img loading="lazy" src="{{ url_for('thumb', detail_id=v.ID) }}" onerror="this.parentNode.classList.add('noimg')"></div>
+    <div class="meta">
+      <div class="title">{{ v.TITLE }}</div>
+      <div class="sub">{{ v.DURATION|duration }} · {{ v.RESOLUTION or '' }} · {{ v.SIZE|filesize }}</div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="media-list">
+  {% for a in items %}
+  <a class="row-item" href="#" onclick="openItem({{ a.ID }}, '{{ a.stream_url }}', 'audio', {{ a.TITLE|tojson }}); return false;">
+    <span class="ico">♪</span>
+    <span class="title">{{ a.TITLE }}</span>
+    <span class="sub">{{ a.DURATION|duration }} · {{ a.SIZE|filesize }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
+{% if not items and not folders %}
+<div class="empty">
+  <p>这里空空如也。</p>
+  {% if q %}<p class="muted">换个搜索词试试？</p>{% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

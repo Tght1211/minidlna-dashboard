@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}设置 · Mac音乐库{% endblock %}
+{% block content %}
+
+<section class="card">
+  <h3>基本信息</h3>
+  <ul class="kv">
+    <li><span>服务名</span><span><code>{{ friendly_name }}</code></span></li>
+    <li><span>DLNA 端口</span><span>{{ port }}</span></li>
+    <li><span>进程</span><span>{{ process.pid if process else '未运行' }} · {{ process.etime if process else '' }}</span></li>
+    <li><span>配置文件</span><span><code>~/.config/minidlna/minidlna.conf</code></span></li>
+  </ul>
+</section>
+
+<section class="card">
+  <h3>媒体目录</h3>
+  <table class="tbl wide">
+    <thead><tr><th>路径</th><th>类型</th><th></th></tr></thead>
+    <tbody>
+      {% for md in media_dirs %}
+      <tr>
+        <td><code>{{ md.path }}</code></td>
+        <td>{{ md.label }}</td>
+        <td>
+          <button class="btn small danger" onclick="removeDir({{ md.path|tojson }})">移除</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h4>添加新目录</h4>
+  <form class="addform" onsubmit="addDir(event)">
+    <input type="text" id="newpath" placeholder="/Volumes/.../my-media" required>
+    <select id="newtypes">
+      <option value="">全部</option>
+      <option value="A">音频</option>
+      <option value="V" selected>视频</option>
+      <option value="P">图片</option>
+      <option value="AV">音频+视频</option>
+      <option value="AVP">音视频图片</option>
+    </select>
+    <button class="btn" type="submit">添加并重启服务</button>
+  </form>
+  <p class="muted">添加后会自动 <code>brew services restart minidlna</code>。外置盘路径要求当前已挂载。</p>
+</section>
+
+<section class="card">
+  <h3>自动同步监听 <span class="pill {{ 'on' if watcher.enabled else 'off' }}">{{ '开启' if watcher.enabled else '关闭' }}</span></h3>
+  <p class="muted">
+    使用 FSEvents 监听媒体目录，检测到变化后等待 30 秒（防止批量拷贝时反复触发），然后向 minidlna 发送 SIGHUP 触发重扫。
+  </p>
+  <ul class="kv">
+    <li><span>监听中</span><span>{{ watcher.watched|length }} 个目录</span></li>
+    <li><span>未挂载</span><span>{{ watcher.unmounted|length }} 个 {{ '· 等待恢复' if watcher.unmounted else '' }}</span></li>
+    <li><span>上次变更路径</span><span><code>{{ watcher.last_event_path or '—' }}</code></span></li>
+    <li><span>上次变更</span><span>{{ watcher.last_change_at|ago }}</span></li>
+    <li><span>上次扫描</span><span>{{ watcher.last_scan_at|ago }}</span></li>
+  </ul>
+  <div class="row">
+    <button class="btn" onclick="api('/api/rescan', 'POST').then(()=>location.reload())">立即扫描</button>
+    <button class="btn ghost" onclick="toggleWatcher({{ 'false' if watcher.enabled else 'true' }})">
+      {{ '关闭监听' if watcher.enabled else '开启监听' }}
+    </button>
+    <button class="btn ghost" onclick="api('/api/restart', 'POST').then(()=>setTimeout(()=>location.reload(),2000))">
+      重启 minidlna
+    </button>
+  </div>
+</section>
+
+<section class="card">
+  <h3>缩略图</h3>
+  <p class="muted">视频缩略图按需懒加载。也可以一次性后台批量生成（耗时取决于视频数量与磁盘速度）。</p>
+  <button class="btn" onclick="api('/api/batch_thumbs', 'POST').then(()=>alert('已在后台开始生成缩略图，可在概览页看缓存进度'))">
+    批量生成视频缩略图
+  </button>
+</section>
+
+<section class="card">
+  <h3>minidlna 日志</h3>
+  {% if log %}
+  <pre class="log">{{ log }}</pre>
+  {% else %}
+  <p class="muted">未找到日志文件 <code>~/.cache/minidlna/minidlna.log</code></p>
+  {% endif %}
+</section>
+
+{% endblock %}
