@@ -154,12 +154,13 @@ def browse():
     q = request.args.get("q", "").strip()
     items: list = []
     folders_list: list = []
+    media_roots = [md.path for md in config.parse_media_dirs()]
     if q:
         items = db.search(q)
     elif folder:
         items = db.items_in_folder(folder, kind)
     else:
-        folders_list = db.folders(kind)
+        folders_list = db.folders(kind, media_roots)
     for it in items:
         it["stream_url"] = _stream_url(it["ID"])
         it["dlna_url"] = _dlna_url(it["ID"], it.get("PATH"), it.get("MIME"))

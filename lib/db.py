@@ -73,37 +73,38 @@ def search(query: str, limit: int = 100) -> list[dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
-_NOISE_DIR_NAMES = {"DCIM", "Camera", "Movies", "Pictures", "Download", "Downloads"}
+def _bucket_for(path: str, media_roots: list[str]) -> str:
+    """Group a file by the first sub-directory under its configured media_dir.
+    Falls back to the file's own dirname if no root matches."""
+    for root in sorted(media_roots, key=len, reverse=True):
+        root_n = root.rstrip("/")
+        if path == root_n or path.startswith(root_n + "/"):
+            rest = path[len(root_n) + 1 :] if path != root_n else ""
+            parts = rest.split("/", 1)
+            if len(parts) > 1:
+                return f"{root_n}/{parts[0]}"
+            # file sits directly inside the media_dir
+            return root_n
+    return os.path.dirname(path)
 
 
-def _smart_display(folder: str) -> str:
-    """Pick a short, disambiguating label for a folder full of media.
-    Last path component alone is often a generic 'Camera01' that repeats across
-    parent date dirs, so prepend the nearest non-noise ancestor when needed."""
-    parts = [p for p in folder.split("/") if p]
-    if not parts:
-        return folder
-    last = parts[-1]
-    # walk up looking for a meaningful ancestor (not generic camera/dcim names)
-    for ancestor in reversed(parts[:-1]):
-        if ancestor not in _NOISE_DIR_NAMES and not ancestor.lower().startswith("camera"):
-            return f"{ancestor} / {last}"
-    return last
-
-
-def folders(kind: str) -> list[dict[str, Any]]:
-    """Group items by their parent folder."""
+def folders(kind: str, media_roots: list[str] | None = None) -> list[dict[str, Any]]:
+    """Group items into top-level buckets — one per immediate sub-directory of
+    each configured media_dir. Loose files sitting directly in a media_dir all
+    share that media_dir's bucket."""
     mime_filter = f"{kind}/%"
     rows = _q(
         "SELECT PATH, SIZE, ID FROM DETAILS WHERE MIME LIKE ? AND PATH IS NOT NULL",
         (mime_filter,),
     )
+    roots = media_roots or []
     buckets: dict[str, dict[str, Any]] = {}
     for r in rows:
-        folder = os.path.dirname(r["PATH"])
-        b = buckets.setdefault(folder, {
-            "folder": folder,
-            "display": _smart_display(folder),
+        bucket = _bucket_for(r["PATH"], roots)
+        display = os.path.basename(bucket) or bucket
+        b = buckets.setdefault(bucket, {
+            "folder": bucket,
+            "display": display,
             "count": 0,
             "size": 0,
             "sample_id": r["ID"],
@@ -113,14 +114,15 @@ def folders(kind: str) -> list[dict[str, Any]]:
     return sorted(buckets.values(), key=lambda x: x["folder"])
 
 
-def items_in_folder(folder: str, kind: str, limit: int = 500) -> list[dict[str, Any]]:
-    like = f"{folder}/%"
+def items_in_folder(folder: str, kind: str, limit: int = 5000) -> list[dict[str, Any]]:
+    """Return all items recursively under `folder` (so a date bucket includes
+    Camera01/02/03 leaves all together)."""
+    like = f"{folder.rstrip('/')}/%"
     rows = _q(
         "SELECT ID, TITLE, PATH, SIZE, DURATION, RESOLUTION, MIME, ALBUM_ART "
         "FROM DETAILS WHERE MIME LIKE ? AND PATH LIKE ? "
-        "AND PATH NOT LIKE ? "
         "ORDER BY PATH LIMIT ?",
-        (f"{kind}/%", like, f"{folder}/%/%", limit),
+        (f"{kind}/%", like, limit),
     )
     return [dict(r) for r in rows]
 
