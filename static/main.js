@@ -343,7 +343,7 @@ document.addEventListener("keydown", e => {
   const content = el.querySelector(".hero-content");
   let idx = 0;
   let timer = null;
-  const INTERVAL = 7000;
+  const INTERVAL = 12000;
 
   function go(delta) {
     idx = (idx + delta + slides.length) % slides.length;

@@ -1046,7 +1046,7 @@ main {
   content: ""; position: absolute; inset: 0;
   background: var(--accent);
   transform-origin: left;
-  animation: hero-dot-fill 7s linear forwards;
+  animation: hero-dot-fill 12s linear forwards;
 }
 @keyframes hero-dot-fill {
   from { transform: scaleX(0); }
