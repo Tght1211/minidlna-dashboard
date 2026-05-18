@@ -152,6 +152,17 @@ def count_search(query: str) -> int:
     return int(rows[0]["n"]) if rows else 0
 
 
+def random_videos(limit: int = 10) -> list[dict[str, Any]]:
+    """Random sample of videos for hero rotation."""
+    rows = _q(
+        "SELECT ID, TITLE, PATH, SIZE, DURATION, RESOLUTION, MIME, TIMESTAMP "
+        "FROM DETAILS WHERE MIME LIKE 'video/%' AND TIMESTAMP IS NOT NULL "
+        "ORDER BY RANDOM() LIMIT ?",
+        (limit,),
+    )
+    return [dict(r) for r in rows]
+
+
 def all_items(kind: str, limit: int = 5000) -> list[dict[str, Any]]:
     rows = _q(
         "SELECT ID, TITLE, PATH, SIZE, DURATION, RESOLUTION, MIME, ALBUM_ART "

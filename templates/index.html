@@ -2,27 +2,35 @@
 {% block title %}概览 · 家庭媒体库{% endblock %}
 {% block content %}
 
-{% if hero %}
-<section class="hero" style="background-image: linear-gradient(180deg, rgba(6,8,13,0.4) 0%, rgba(6,8,13,0.85) 70%, var(--bg) 100%), url('{{ url_for('thumb', detail_id=hero.ID) }}');">
+{% if hero_slides %}
+<section class="hero" id="hero" data-slides='{{ hero_slides|tojson }}'>
+  <div class="hero-slides">
+    <div class="hero-slide active" style="background-image: url('{{ hero.thumb_url }}');"></div>
+  </div>
+  <div class="hero-overlay"></div>
   <div class="hero-corner hero-corner-tl"></div>
   <div class="hero-corner hero-corner-tr"></div>
   <div class="hero-corner hero-corner-bl"></div>
   <div class="hero-corner hero-corner-br"></div>
   <div class="hero-content">
-    <div class="hero-label">▸ FEATURED · {{ hero.MIME }} · {{ hero.RESOLUTION }}</div>
-    <h1 class="hero-title">{{ hero.TITLE }}</h1>
-    <div class="hero-meta">
-      <span>{{ hero.DURATION|duration }}</span>
+    <div class="hero-label" id="hero-label">▸ 回忆 · {{ hero.memory }}</div>
+    <h1 class="hero-title" id="hero-title">{{ hero.title }}</h1>
+    <div class="hero-meta" id="hero-meta">
+      <span>{{ hero.duration }}</span>
       <span class="dot">·</span>
-      <span>{{ hero.SIZE|filesize }}</span>
+      <span>{{ hero.resolution }}</span>
       <span class="dot">·</span>
-      <span>{{ hero.TIMESTAMP|ago }}</span>
+      <span>{{ hero.size|filesize }}</span>
     </div>
     <div class="hero-actions">
-      <a class="btn" href="#" data-id="{{ hero.ID }}" data-stream="{{ hero.stream_url }}" data-dlna="{{ hero.dlna_url }}" data-kind="video" data-title="{{ hero.TITLE }}">▶ 播放</a>
+      <a class="btn hero-play" id="hero-play" href="#"
+         data-id="{{ hero.id }}" data-stream="{{ hero.stream_url }}"
+         data-dlna="{{ hero.dlna_url }}" data-kind="video"
+         data-title="{{ hero.title }}" data-resolution="{{ hero.resolution }}">▶ 播放</a>
       <a class="btn ghost" href="{{ url_for('browse', kind='video') }}">浏览全部视频</a>
     </div>
   </div>
+  <div class="hero-dots" id="hero-dots"></div>
 </section>
 {% endif %}
 

@@ -138,11 +138,42 @@ def index():
     for item in recent_video + recent_audio + recent_image:
         item["stream_url"] = _stream_url(item["ID"])
         item["dlna_url"] = _dlna_url(item["ID"], item.get("PATH"), item.get("MIME"))
-    # pick a hero — newest video with a cached thumb if any, else newest video
-    hero = next(
-        (v for v in recent_video if thumbs.has_thumb(v["ID"])),
-        recent_video[0] if recent_video else None,
-    )
+
+    # Hero slide pool: pick random videos that already have thumbnails (so the
+    # backdrop never falls back to a black square). Over-fetch then filter.
+    import time as _t
+    pool = db.random_videos(limit=40)
+    hero_slides: list[dict] = []
+    now_ts = _t.time()
+    for v in pool:
+        if len(hero_slides) >= 10:
+            break
+        if not thumbs.has_thumb(v["ID"]):
+            continue
+        ts = float(v.get("TIMESTAMP") or 0)
+        days = max(0, int((now_ts - ts) // 86400)) if ts else None
+        if days is None:
+            memory = ""
+        elif days < 30:
+            memory = f"{days} 天前的这一刻"
+        elif days < 365:
+            memory = f"{days // 30} 个月前的回忆"
+        else:
+            yrs = days // 365
+            rem = (days % 365) // 30
+            memory = f"{yrs} 年前的回忆" if rem == 0 else f"{yrs} 年 {rem} 个月前的回忆"
+        hero_slides.append({
+            "id": v["ID"],
+            "title": v["TITLE"],
+            "duration": str(v.get("DURATION") or "").split(".", 1)[0],
+            "resolution": v.get("RESOLUTION") or "",
+            "size": v.get("SIZE") or 0,
+            "memory": memory,
+            "thumb_url": url_for("thumb", detail_id=v["ID"]),
+            "stream_url": _stream_url(v["ID"]),
+            "dlna_url": _dlna_url(v["ID"], v.get("PATH"), v.get("MIME")),
+        })
+    hero = hero_slides[0] if hero_slides else None
     return render_template(
         "index.html",
         counts=counts,
@@ -155,6 +186,7 @@ def index():
         recent_audio=recent_audio,
         recent_image=recent_image,
         hero=hero,
+        hero_slides=hero_slides,
         watcher=watcher.state_snapshot(),
         thumb_cache=thumbs.cache_stats(),
         db_size=db.db_size(),

@@ -326,6 +326,107 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeModal();
 });
 
+// Hero carousel (memory poster rotation)
+(function hero() {
+  const el = document.getElementById("hero");
+  if (!el) return;
+  let slides;
+  try { slides = JSON.parse(el.dataset.slides); } catch { return; }
+  if (!slides || slides.length === 0) return;
+
+  const slidesWrap = el.querySelector(".hero-slides");
+  const labelEl = el.querySelector("#hero-label");
+  const titleEl = el.querySelector("#hero-title");
+  const metaEl = el.querySelector("#hero-meta");
+  const playBtn = el.querySelector("#hero-play");
+  const dotsEl = el.querySelector("#hero-dots");
+  const content = el.querySelector(".hero-content");
+  let idx = 0;
+  let timer = null;
+  const INTERVAL = 7000;
+
+  function fmtSize(n) {
+    if (!n) return "—";
+    const u = ["B", "KB", "MB", "GB", "TB"];
+    let i = 0; let v = Number(n);
+    while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+    return i === 0 ? `${n} B` : `${v.toFixed(1)} ${u[i]}`;
+  }
+
+  function paintDots() {
+    dotsEl.innerHTML = slides.map((_, i) =>
+      `<span data-i="${i}" class="${i === idx ? "active" : ""}"></span>`
+    ).join("");
+  }
+
+  function paint(initial) {
+    const s = slides[idx];
+    if (!initial) {
+      // crossfade backdrop
+      const next = document.createElement("div");
+      next.className = "hero-slide";
+      next.style.backgroundImage = `url("${s.thumb_url}")`;
+      slidesWrap.appendChild(next);
+      // force layout then activate
+      void next.offsetWidth;
+      const prev = slidesWrap.querySelector(".hero-slide.active");
+      next.classList.add("active");
+      if (prev && prev !== next) {
+        prev.classList.add("leaving");
+        prev.classList.remove("active");
+        setTimeout(() => prev.remove(), 1200);
+      }
+      // re-trigger content fade
+      content.classList.add("swap");
+      requestAnimationFrame(() => {
+        labelEl.textContent = `▸ 回忆 · ${s.memory || "—"}`;
+        titleEl.textContent = s.title;
+        metaEl.innerHTML = `
+          <span>${s.duration || "—"}</span>
+          <span class="dot">·</span>
+          <span>${s.resolution || "—"}</span>
+          <span class="dot">·</span>
+          <span>${fmtSize(s.size)}</span>`;
+        playBtn.dataset.id = s.id;
+        playBtn.dataset.stream = s.stream_url;
+        playBtn.dataset.dlna = s.dlna_url;
+        playBtn.dataset.title = s.title;
+        playBtn.dataset.resolution = s.resolution || "";
+        requestAnimationFrame(() => content.classList.remove("swap"));
+      });
+    } else {
+      // initial paint already has DOM content; just align playBtn data
+      playBtn.dataset.resolution = s.resolution || "";
+    }
+    paintDots();
+  }
+
+  function advance() {
+    idx = (idx + 1) % slides.length;
+    paint(false);
+  }
+
+  function startTimer() {
+    stopTimer();
+    timer = setInterval(advance, INTERVAL);
+  }
+  function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+
+  dotsEl.addEventListener("click", e => {
+    const dot = e.target.closest("span[data-i]");
+    if (!dot) return;
+    idx = Number(dot.dataset.i);
+    paint(false);
+    startTimer();
+  });
+
+  el.addEventListener("mouseenter", stopTimer);
+  el.addEventListener("mouseleave", startTimer);
+
+  paint(true);
+  startTimer();
+})();
+
 // HUD clock
 (function clock() {
   const el = document.getElementById("hud-clock");
