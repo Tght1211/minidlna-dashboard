@@ -1017,49 +1017,29 @@ main {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* prev/next nav buttons */
-.hero-nav {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  width: 52px; height: 52px;
-  background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #fff;
-  font-size: 28px; line-height: 1;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  z-index: 5;
-  opacity: 0; transition: opacity 0.25s, background 0.15s, border-color 0.15s, transform 0.15s;
-  backdrop-filter: blur(8px);
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
-}
-.hero:hover .hero-nav { opacity: 1; }
-.hero-nav:hover {
-  background: rgba(0,230,195,0.18);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.hero-nav:active { transform: translateY(-50%) scale(0.94); }
-.hero-nav-prev { left: 24px; }
-.hero-nav-next { right: 24px; }
-
-/* progress indicator (Netflix-style thin bars) */
+/* progress indicator — also the primary manual nav */
 .hero-dots {
   position: absolute;
   right: 56px; bottom: 32px;
-  display: flex; gap: 8px;
+  display: flex; gap: 10px;
   z-index: 4;
+  padding: 12px 8px;
+  margin: -12px -8px;
 }
 .hero-dots span {
-  width: 24px; height: 3px;
+  width: 36px; height: 4px;
   background: rgba(255,255,255,0.22);
   cursor: pointer;
   position: relative; overflow: hidden;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
 }
-.hero-dots span:hover { background: rgba(255,255,255,0.4); }
+.hero-dots span:hover {
+  background: rgba(255,255,255,0.45);
+  transform: scaleY(1.6);
+}
 .hero-dots span.active {
-  background: rgba(0,230,195,0.2);
-  box-shadow: 0 0 8px var(--accent-glow);
+  background: rgba(0,230,195,0.22);
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 .hero-dots span.active::after {
   /* fill bar animation showing remaining time on slide */

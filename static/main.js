@@ -340,8 +340,6 @@ document.addEventListener("keydown", e => {
   const metaEl = el.querySelector("#hero-meta");
   const playBtn = el.querySelector("#hero-play");
   const dotsEl = el.querySelector("#hero-dots");
-  const prevBtn = el.querySelector("#hero-prev");
-  const nextBtn = el.querySelector("#hero-next");
   const content = el.querySelector(".hero-content");
   let idx = 0;
   let timer = null;
@@ -428,9 +426,6 @@ document.addEventListener("keydown", e => {
     startTimer();
   });
 
-  prevBtn.addEventListener("click", () => go(-1));
-  nextBtn.addEventListener("click", () => go(1));
-
   // Keyboard arrows on home (only when no modal open)
   document.addEventListener("keydown", e => {
     const modal = document.getElementById("modal");
@@ -443,7 +438,7 @@ document.addEventListener("keydown", e => {
   // Pointer-drag swipe
   let dragStart = null;
   el.addEventListener("pointerdown", e => {
-    if (e.target.closest(".hero-content, .hero-nav, .hero-dots")) return;
+    if (e.target.closest(".hero-content, .hero-dots")) return;
     dragStart = { x: e.clientX, idx };
   });
   el.addEventListener("pointerup", e => {
