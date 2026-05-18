@@ -331,14 +331,16 @@ main {
   clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
 }
 .media-card:hover {
-  transform: scale(1.06) translateY(-2px);
+  transform: scale(1.12) translateY(-4px);
   border-color: var(--accent);
   box-shadow:
-    0 10px 30px rgba(0,0,0,0.55),
-    0 0 18px var(--accent-glow);
+    0 14px 40px rgba(0,0,0,0.6),
+    0 0 24px var(--accent-glow);
   text-decoration: none;
   z-index: 3;
 }
+.row-scroll .media-card:first-child:hover { transform: scale(1.12) translateY(-4px) translateX(4%); transform-origin: left center; }
+.row-scroll .media-card:last-child:hover { transform: scale(1.12) translateY(-4px) translateX(-4%); transform-origin: right center; }
 .media-card::after {
   /* Netflix-style overlay reveal */
   content: "";
@@ -911,12 +913,13 @@ main {
 /* ---------- hero banner (Netflix-style featured) ---------- */
 .hero {
   position: relative;
-  margin: -24px -28px 28px;
-  height: 60vh;
-  min-height: 420px;
-  max-height: 640px;
+  margin: -24px -28px 32px;
+  height: 68vh;
+  min-height: 460px;
+  max-height: 720px;
   border-bottom: 1px solid var(--border);
   overflow: hidden;
+  user-select: none;
 }
 .hero-slides {
   position: absolute; inset: 0;
@@ -1014,6 +1017,31 @@ main {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* prev/next nav buttons */
+.hero-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 52px; height: 52px;
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 28px; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 5;
+  opacity: 0; transition: opacity 0.25s, background 0.15s, border-color 0.15s, transform 0.15s;
+  backdrop-filter: blur(8px);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.hero:hover .hero-nav { opacity: 1; }
+.hero-nav:hover {
+  background: rgba(0,230,195,0.18);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.hero-nav:active { transform: translateY(-50%) scale(0.94); }
+.hero-nav-prev { left: 24px; }
+.hero-nav-next { right: 24px; }
+
 /* progress indicator (Netflix-style thin bars) */
 .hero-dots {
   position: absolute;
@@ -1046,6 +1074,30 @@ main {
 }
 
 /* ---------- horizontal scrolling rows (Netflix-style) ---------- */
+.row-arrows-wrap { position: relative; }
+.row-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 92px;
+  background: rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 26px; line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 5;
+  opacity: 0; transition: opacity 0.2s, background 0.15s, border-color 0.15s;
+  backdrop-filter: blur(8px);
+}
+.row-arrows-wrap:hover .row-arrow { opacity: 1; }
+.row-arrow:hover {
+  background: rgba(0,230,195,0.18);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.row-arrow-left { left: -8px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 0); }
+.row-arrow-right { right: -8px; }
+
 .row-scroll {
   display: flex; gap: 12px;
   overflow-x: auto; overflow-y: visible;
@@ -1053,6 +1105,7 @@ main {
   margin: -4px;
   scrollbar-width: thin;
   scrollbar-color: var(--border-bright) transparent;
+  scroll-behavior: smooth;
 }
 .row-scroll::-webkit-scrollbar { height: 8px; }
 .row-scroll::-webkit-scrollbar-track { background: transparent; }

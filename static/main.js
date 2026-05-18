@@ -340,10 +340,18 @@ document.addEventListener("keydown", e => {
   const metaEl = el.querySelector("#hero-meta");
   const playBtn = el.querySelector("#hero-play");
   const dotsEl = el.querySelector("#hero-dots");
+  const prevBtn = el.querySelector("#hero-prev");
+  const nextBtn = el.querySelector("#hero-next");
   const content = el.querySelector(".hero-content");
   let idx = 0;
   let timer = null;
   const INTERVAL = 7000;
+
+  function go(delta) {
+    idx = (idx + delta + slides.length) % slides.length;
+    paint(false);
+    startTimer();
+  }
 
   function fmtSize(n) {
     if (!n) return "—";
@@ -420,11 +428,67 @@ document.addEventListener("keydown", e => {
     startTimer();
   });
 
+  prevBtn.addEventListener("click", () => go(-1));
+  nextBtn.addEventListener("click", () => go(1));
+
+  // Keyboard arrows on home (only when no modal open)
+  document.addEventListener("keydown", e => {
+    const modal = document.getElementById("modal");
+    if (modal && !modal.classList.contains("hidden")) return;
+    if (e.target.matches("input, textarea")) return;
+    if (e.key === "ArrowLeft") go(-1);
+    else if (e.key === "ArrowRight") go(1);
+  });
+
+  // Pointer-drag swipe
+  let dragStart = null;
+  el.addEventListener("pointerdown", e => {
+    if (e.target.closest(".hero-content, .hero-nav, .hero-dots")) return;
+    dragStart = { x: e.clientX, idx };
+  });
+  el.addEventListener("pointerup", e => {
+    if (!dragStart) return;
+    const dx = e.clientX - dragStart.x;
+    dragStart = null;
+    if (Math.abs(dx) > 60) go(dx > 0 ? -1 : 1);
+  });
+  el.addEventListener("pointercancel", () => { dragStart = null; });
+
   el.addEventListener("mouseenter", stopTimer);
   el.addEventListener("mouseleave", startTimer);
 
   paint(true);
   startTimer();
+})();
+
+// Horizontal row scroll arrow buttons (Netflix-style)
+(function rowArrows() {
+  document.querySelectorAll(".row-scroll").forEach(row => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "row-arrows-wrap";
+    row.parentNode.insertBefore(wrapper, row);
+    wrapper.appendChild(row);
+    const mkBtn = (cls, txt, dir) => {
+      const b = document.createElement("button");
+      b.className = `row-arrow ${cls}`;
+      b.textContent = txt;
+      b.addEventListener("click", () => {
+        row.scrollBy({ left: dir * (row.clientWidth * 0.8), behavior: "smooth" });
+      });
+      wrapper.appendChild(b);
+      return b;
+    };
+    const left = mkBtn("row-arrow-left", "‹", -1);
+    const right = mkBtn("row-arrow-right", "›", 1);
+    function updateVis() {
+      left.style.display = row.scrollLeft > 8 ? "flex" : "none";
+      right.style.display =
+        row.scrollLeft + row.clientWidth < row.scrollWidth - 8 ? "flex" : "none";
+    }
+    updateVis();
+    row.addEventListener("scroll", updateVis, { passive: true });
+    window.addEventListener("resize", updateVis);
+  });
 })();
 
 // HUD clock
