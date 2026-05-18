@@ -345,16 +345,19 @@ def thumb(detail_id: int):
     return send_file(p, mimetype="image/jpeg", max_age=86400)
 
 
+POSTER_WIDTH = 2560
+
+
 @app.route("/poster/<int:detail_id>")
 def poster(detail_id: int):
-    """High-res backdrop for hero — 1280px wide JPEG."""
+    """High-res backdrop for hero — 2560px wide JPEG."""
     info = db.item(detail_id)
     if not info:
         abort(404)
     mime = info.get("MIME") or ""
     if not (mime.startswith("video") or mime.startswith("image")):
         abort(404)
-    p = thumbs.ensure_thumb(detail_id, info["PATH"], is_image=mime.startswith("image"), width=1280)
+    p = thumbs.ensure_thumb(detail_id, info["PATH"], is_image=mime.startswith("image"), width=POSTER_WIDTH)
     if not p:
         abort(404)
     return send_file(p, mimetype="image/jpeg", max_age=86400)
@@ -444,13 +447,13 @@ def api_batch_thumbs():
 # ---------- launch ----------
 
 def _warm_posters(ids: list[int]) -> None:
-    """Pre-generate 1280px posters for hero rotation so they're cached on disk
+    """Pre-generate hero posters at POSTER_WIDTH so they're cached on disk
     before the slide actually shows."""
     for i in ids:
         try:
             info = db.item(i)
             if info and info.get("PATH"):
-                thumbs.ensure_thumb(i, info["PATH"], width=1280)
+                thumbs.ensure_thumb(i, info["PATH"], width=POSTER_WIDTH)
         except Exception:
             pass
 
