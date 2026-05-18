@@ -18,6 +18,16 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["JSON_AS_ASCII"] = False
 app.jinja_env.add_extension("jinja2.ext.loopcontrols")
 
+# Static asset cache buster: bump on every dashboard restart so users always
+# see the latest CSS/JS without manual hard-refresh.
+import time as _time
+_ASSET_VERSION = str(int(_time.time()))
+
+
+@app.context_processor
+def _inject_asset_version():
+    return {"asset_version": _ASSET_VERSION}
+
 
 # ---------- formatting filters ----------
 

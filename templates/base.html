@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}家庭媒体库 · DLNA{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}?v={{ asset_version }}">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🎬</text></svg>">
 </head>
 <body>
@@ -44,7 +44,7 @@
   </div>
 </div>
 
-<script src="{{ url_for('static', filename='main.js') }}"></script>
+<script src="{{ url_for('static', filename='main.js') }}?v={{ asset_version }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
