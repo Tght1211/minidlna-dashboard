@@ -13,9 +13,11 @@
   <div class="hero-corner hero-corner-bl"></div>
   <div class="hero-corner hero-corner-br"></div>
   <div class="hero-content">
-    <div class="hero-label" id="hero-label">▸ 回忆 · {{ hero.memory }}</div>
-    <h1 class="hero-title" id="hero-title">{{ hero.title }}</h1>
+    <div class="hero-label">▸ 回忆</div>
+    <h1 class="hero-title" id="hero-title">{{ hero.memory }}</h1>
     <div class="hero-meta" id="hero-meta">
+      <span class="hero-filename" id="hero-filename">{{ hero.title }}</span>
+      <span class="dot">·</span>
       <span>{{ hero.duration }}</span>
       <span class="dot">·</span>
       <span>{{ hero.resolution }}</span>

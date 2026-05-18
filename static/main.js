@@ -385,9 +385,10 @@ document.addEventListener("keydown", e => {
       // re-trigger content fade
       content.classList.add("swap");
       requestAnimationFrame(() => {
-        labelEl.textContent = `▸ 回忆 · ${s.memory || "—"}`;
-        titleEl.textContent = s.title;
+        titleEl.textContent = s.memory || "—";
         metaEl.innerHTML = `
+          <span class="hero-filename">${escapeHtml(s.title)}</span>
+          <span class="dot">·</span>
           <span>${s.duration || "—"}</span>
           <span class="dot">·</span>
           <span>${s.resolution || "—"}</span>
