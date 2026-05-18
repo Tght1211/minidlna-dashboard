@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}概览 · 家庭媒体库{% endblock %}
+{% block title %}首页 · 家庭媒体库{% endblock %}
 {% block content %}
 
 {% if hero_slides %}
@@ -42,85 +42,26 @@
 {% endif %}
 
 <section class="stats">
-  <div class="stat">
+  <a class="stat" href="{{ url_for('browse', kind='audio') }}">
     <div class="stat-label">音频</div>
     <div class="stat-value">{{ counts.audio }}</div>
-  </div>
-  <div class="stat">
+  </a>
+  <a class="stat" href="{{ url_for('browse', kind='video') }}">
     <div class="stat-label">视频</div>
     <div class="stat-value">{{ counts.video }}</div>
-  </div>
-  <div class="stat">
+  </a>
+  <a class="stat" href="{{ url_for('browse', kind='image') }}">
     <div class="stat-label">图片</div>
     <div class="stat-value">{{ counts.image }}</div>
-  </div>
+  </a>
   <div class="stat">
     <div class="stat-label">总大小</div>
     <div class="stat-value sm">{{ total_size|filesize }}</div>
   </div>
 </section>
 
-<section class="grid-2">
-  <div class="card">
-    <h3>自动同步 <span class="pill {{ 'on' if watcher.enabled else 'off' }}">{{ '监听中' if watcher.enabled else '已关闭' }}</span></h3>
-    <ul class="kv">
-      <li><span>监听目录</span><span>{{ watcher.watched|length }} 个</span></li>
-      {% if watcher.unmounted %}
-      <li><span>未挂载</span><span class="warn">{{ watcher.unmounted|length }} 个 · 等待恢复</span></li>
-      {% endif %}
-      <li><span>上次变更</span><span>{{ watcher.last_change_at|ago }}</span></li>
-      <li><span>上次扫描</span><span>{{ watcher.last_scan_at|ago }}</span></li>
-    </ul>
-    <div class="row">
-      <button class="btn" onclick="api('/api/rescan', 'POST').then(refresh)">立即扫描</button>
-      <button class="btn ghost" onclick="toggleWatcher({{ 'false' if watcher.enabled else 'true' }})">
-        {{ '关闭监听' if watcher.enabled else '开启监听' }}
-      </button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>已连接设备</h3>
-    {% if dlna_status.clients %}
-    <table class="tbl">
-      <thead><tr><th>ID</th><th>类型</th><th>IP</th><th>连接数</th></tr></thead>
-      <tbody>
-        {% for c in dlna_status.clients %}
-        <tr><td>{{ c.id }}</td><td>{{ c.type }}</td><td>{{ c.ip }}</td><td>{{ c.connections }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p class="muted">暂无客户端连接</p>
-    {% endif %}
-  </div>
-</section>
-
-<section class="card">
-  <h3>媒体目录与磁盘</h3>
-  <table class="tbl wide">
-    <thead><tr><th>路径</th><th>类型</th><th>磁盘占用</th></tr></thead>
-    <tbody>
-      {% for md in media_dirs %}
-      <tr>
-        <td><code>{{ md.path }}</code></td>
-        <td>{{ md.label }}</td>
-        <td>
-          {% set d = disk.get(md.path) %}
-          {% if d %}
-            {{ d.used|filesize }} / {{ d.total|filesize }} · 剩 {{ d.free|filesize }}
-          {% else %}
-            <span class="warn">未挂载</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
-
 {% if recent_video %}
-<section class="card">
+<section class="row-section">
   <h3>最近视频 <a class="more" href="{{ url_for('browse', kind='video') }}">全部 →</a></h3>
   <div class="row-scroll">
     {% for v in recent_video %}
@@ -139,7 +80,7 @@
 {% endif %}
 
 {% if recent_image %}
-<section class="card">
+<section class="row-section">
   <h3>最近照片 <a class="more" href="{{ url_for('browse', kind='image') }}">全部 →</a></h3>
   <div class="row-scroll">
     {% for p in recent_image %}
@@ -162,7 +103,7 @@
 {% endif %}
 
 {% if recent_audio %}
-<section class="card">
+<section class="row-section">
   <h3>最近音频 <a class="more" href="{{ url_for('browse', kind='audio') }}">全部 →</a></h3>
   <div class="media-list">
     {% for a in recent_audio %}
@@ -176,21 +117,9 @@
 </section>
 {% endif %}
 
-<section class="card sys">
-  <h3>系统信息</h3>
-  <ul class="kv">
-    <li><span>本机地址</span><span><code>{{ local_ip }}</code></span></li>
-    <li><span>minidlna PID</span><span>{{ process.pid if process else '—' }}</span></li>
-    <li><span>运行时长</span><span>{{ process.etime if process else '—' }}</span></li>
-    <li><span>数据库大小</span><span>{{ db_size|filesize }}</span></li>
-    <li><span>缩略图缓存</span><span>{{ thumb_cache.count }} 张 · {{ thumb_cache.bytes|filesize }}</span></li>
-  </ul>
-</section>
-
 {% endblock %}
 {% block scripts %}
 <script>
-  // Auto-refresh while scanning
   {% if dlna_status.scan_in_progress %}
   setTimeout(() => location.reload(), 15000);
   {% endif %}

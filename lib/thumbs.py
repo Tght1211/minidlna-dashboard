@@ -6,6 +6,7 @@ import threading
 from pathlib import Path
 
 CACHE_DIR = Path.home() / ".cache" / "minidlna-dashboard" / "thumbs"
+POSTER_CACHE_DIR = Path.home() / ".cache" / "minidlna-dashboard" / "posters"
 FFMPEG = "/opt/homebrew/bin/ffmpeg"
 # Cap concurrent ffmpeg invocations: external USB/Thunderbolt drives thrash
 # badly when many seek+read jobs run in parallel.
@@ -25,12 +26,14 @@ def _lock_for(detail_id: int) -> threading.Lock:
         return lk
 
 
-def thumb_path(detail_id: int) -> Path:
+def thumb_path(detail_id: int, width: int = 320) -> Path:
+    if width >= 1024:
+        return POSTER_CACHE_DIR / f"{detail_id}.jpg"
     return CACHE_DIR / f"{detail_id}.jpg"
 
 
-def has_thumb(detail_id: int) -> bool:
-    p = thumb_path(detail_id)
+def has_thumb(detail_id: int, width: int = 320) -> bool:
+    p = thumb_path(detail_id, width=width)
     return p.exists() and p.stat().st_size > 0
 
 
@@ -38,14 +41,14 @@ def ensure_thumb(detail_id: int, source_path: str, *, is_image: bool = False,
                  seek: float = 5.0, width: int = 320) -> Path | None:
     """Generate thumbnail if missing. Works for video (uses seek+frame) and
     image (no seek, just resize). Returns path or None on failure."""
-    p = thumb_path(detail_id)
-    if has_thumb(detail_id):
+    p = thumb_path(detail_id, width=width)
+    if has_thumb(detail_id, width=width):
         return p
     if not Path(source_path).exists():
         return None
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    with _lock_for(detail_id):
-        if has_thumb(detail_id):
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with _lock_for((detail_id, width)):
+        if has_thumb(detail_id, width=width):
             return p
         tmp = p.with_name(f".{detail_id}.partial.jpg")
 

@@ -13,6 +13,52 @@
 </section>
 
 <section class="card">
+  <h3>已连接设备</h3>
+  {% if dlna_status and dlna_status.clients %}
+  <table class="tbl">
+    <thead><tr><th>类型</th><th>IP</th><th>连接数</th></tr></thead>
+    <tbody>
+      {% for c in dlna_status.clients %}
+      <tr><td>{{ c.get('type','—') }}</td><td><code>{{ c.ip }}</code></td><td>{{ c.connections }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">暂无 DLNA 客户端连接。</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h3>磁盘占用</h3>
+  <table class="tbl wide">
+    <thead><tr><th>路径</th><th>占用</th></tr></thead>
+    <tbody>
+      {% for md in media_dirs %}
+      <tr>
+        <td><code>{{ md.path }}</code></td>
+        <td>
+          {% set d = disk.get(md.path) if disk else None %}
+          {% if d %}{{ d.used|filesize }} / {{ d.total|filesize }} · 剩 {{ d.free|filesize }}
+          {% else %}<span class="warn">未挂载</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h3>系统信息</h3>
+  <ul class="kv">
+    <li><span>本机地址</span><span><code>{{ local_ip }}</code></span></li>
+    <li><span>minidlna PID / 运行时长</span><span>{{ process.pid if process else '—' }} · {{ process.etime if process else '—' }}</span></li>
+    <li><span>数据库大小</span><span>{{ db_size|filesize }}</span></li>
+    <li><span>缩略图缓存</span><span>{{ thumb_cache.count }} 张 · {{ thumb_cache.bytes|filesize }}</span></li>
+  </ul>
+</section>
+
+<section class="card">
   <h3>媒体目录</h3>
   <table class="tbl wide">
     <thead><tr><th>路径</th><th>类型</th><th></th></tr></thead>

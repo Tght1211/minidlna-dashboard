@@ -169,10 +169,18 @@ def index():
             "resolution": v.get("RESOLUTION") or "",
             "size": v.get("SIZE") or 0,
             "memory": memory,
-            "thumb_url": url_for("thumb", detail_id=v["ID"]),
+            "thumb_url": url_for("poster", detail_id=v["ID"]),
             "stream_url": _stream_url(v["ID"]),
             "dlna_url": _dlna_url(v["ID"], v.get("PATH"), v.get("MIME")),
         })
+    # Background: kick off poster generation for the rest of the hero pool
+    # so subsequent rotations are smooth.
+    if hero_slides:
+        threading.Thread(
+            target=_warm_posters,
+            args=([s["id"] for s in hero_slides],),
+            daemon=True,
+        ).start()
     hero = hero_slides[0] if hero_slides else None
     return render_template(
         "index.html",
@@ -281,14 +289,26 @@ def api_items():
 
 @app.route("/settings")
 def settings_page():
+    media_dirs = config.parse_media_dirs()
+    dlna_status = status.fetch_minidlna_status([md.path for md in media_dirs])
+    disk = {}
+    for md in media_dirs:
+        usage = status.disk_usage_for(md.path)
+        if usage:
+            disk[md.path] = usage
     return render_template(
         "settings.html",
-        media_dirs=config.parse_media_dirs(),
+        media_dirs=media_dirs,
         friendly_name=config.parse_kv("friendly_name"),
         port=config.parse_kv("port"),
         log=config.log_tail(120),
         watcher=watcher.state_snapshot(),
         process=status.minidlna_process(),
+        dlna_status=dlna_status,
+        disk=disk,
+        local_ip=status.local_ip(),
+        db_size=db.db_size(),
+        thumb_cache=thumbs.cache_stats(),
     )
 
 
@@ -320,6 +340,21 @@ def thumb(detail_id: int):
     if not (mime.startswith("video") or mime.startswith("image")):
         abort(404)
     p = thumbs.ensure_thumb(detail_id, info["PATH"], is_image=mime.startswith("image"))
+    if not p:
+        abort(404)
+    return send_file(p, mimetype="image/jpeg", max_age=86400)
+
+
+@app.route("/poster/<int:detail_id>")
+def poster(detail_id: int):
+    """High-res backdrop for hero — 1280px wide JPEG."""
+    info = db.item(detail_id)
+    if not info:
+        abort(404)
+    mime = info.get("MIME") or ""
+    if not (mime.startswith("video") or mime.startswith("image")):
+        abort(404)
+    p = thumbs.ensure_thumb(detail_id, info["PATH"], is_image=mime.startswith("image"), width=1280)
     if not p:
         abort(404)
     return send_file(p, mimetype="image/jpeg", max_age=86400)
@@ -407,6 +442,18 @@ def api_batch_thumbs():
 
 
 # ---------- launch ----------
+
+def _warm_posters(ids: list[int]) -> None:
+    """Pre-generate 1280px posters for hero rotation so they're cached on disk
+    before the slide actually shows."""
+    for i in ids:
+        try:
+            info = db.item(i)
+            if info and info.get("PATH"):
+                thumbs.ensure_thumb(i, info["PATH"], width=1280)
+        except Exception:
+            pass
+
 
 def _start_watcher_after_delay() -> None:
     """Start the file watcher after Flask is accepting connections."""

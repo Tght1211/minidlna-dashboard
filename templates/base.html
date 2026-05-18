@@ -17,8 +17,10 @@
   </div>
   <nav class="nav">
     <span class="hud-clock" id="hud-clock">--:--:--</span>
-    <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">概览</a>
-    <a href="{{ url_for('browse', kind='all') }}" class="{% if request.endpoint == 'browse' %}active{% endif %}">媒体库</a>
+    <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">首页</a>
+    <a href="{{ url_for('browse', kind='video') }}" class="{% if request.endpoint == 'browse' and request.args.get('kind','all') == 'video' %}active{% endif %}">视频</a>
+    <a href="{{ url_for('browse', kind='image') }}" class="{% if request.endpoint == 'browse' and request.args.get('kind') == 'image' %}active{% endif %}">照片</a>
+    <a href="{{ url_for('browse', kind='audio') }}" class="{% if request.endpoint == 'browse' and request.args.get('kind') == 'audio' %}active{% endif %}">音乐</a>
     <a href="{{ url_for('settings_page') }}" class="{% if request.endpoint == 'settings_page' %}active{% endif %}">设置</a>
   </nav>
 </header>
